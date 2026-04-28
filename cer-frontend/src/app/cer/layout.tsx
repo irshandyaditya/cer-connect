@@ -9,7 +9,7 @@ export default function CerLayout({
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="p-4 bg-white shadow">
-        <h1 className="text-xl font-bold">CER Board</h1>
+        <h1 className="text-xl font-bold">CER Connect</h1>
       </header>
 
       <main className="p-6">

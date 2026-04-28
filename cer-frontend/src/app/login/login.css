@@ -1,0 +1,528 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+/* ─── ROOT ─── */
+.login-root {
+  font-family: 'DM Sans', sans-serif;
+  display: flex;
+  min-height: 100vh;
+  background: #F7F4EF;
+  overflow: hidden;
+}
+
+/* ─── LEFT PANEL ─── */
+.login-left {
+  flex: 1;
+  position: relative;
+  background: #1C1C2E;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 52px 56px;
+  animation: panelReveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.login-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 80%, rgba(74, 158, 142, 0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% 10%, rgba(212, 136, 74, 0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* ─── GEO RINGS ─── */
+.geo-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+
+.geo-ring--large {
+  width: 420px;
+  height: 420px;
+  right: -160px;
+  top: -120px;
+}
+
+.geo-ring--medium {
+  width: 280px;
+  height: 280px;
+  right: -80px;
+  bottom: 60px;
+  border-color: rgba(74, 158, 142, 0.15);
+}
+
+.geo-ring--small {
+  width: 150px;
+  height: 150px;
+  left: 60px;
+  bottom: 160px;
+  border-color: rgba(212, 136, 74, 0.15);
+}
+
+/* ─── LEFT TOP ─── */
+.left-top {
+  position: relative;
+  z-index: 2;
+}
+
+/* ─── BRAND ─── */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 72px;
+}
+
+.brand-mark {
+  width: 40px;
+  height: 40px;
+  background: #4A9E8E;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'Playfair Display', serif;
+  flex-shrink: 0;
+}
+
+.brand-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ─── HERO TEXT ─── */
+.hero-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(34px, 3.8vw, 48px);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.18;
+  letter-spacing: -0.5px;
+  margin-bottom: 20px;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: #6DBDAD;
+}
+
+.hero-desc {
+  font-size: 15px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.52);
+  line-height: 1.75;
+  max-width: 340px;
+}
+
+/* ─── CER PILLARS ─── */
+.pillars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  z-index: 2;
+}
+
+.pillar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  animation: pillarIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pillar:nth-child(1) { animation-delay: 0.4s; }
+.pillar:nth-child(2) { animation-delay: 0.55s; }
+.pillar:nth-child(3) { animation-delay: 0.7s; }
+
+.pillar-letter {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 17px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pillar-letter--c { background: rgba(74, 158, 142, 0.2);  color: #6DBDAD; }
+.pillar-letter--e { background: rgba(212, 136, 74, 0.18); color: #E8AA78; }
+.pillar-letter--r { background: rgba(155, 124, 196, 0.18); color: #C4A8DF; }
+
+.pillar-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 2px;
+}
+
+.pillar-desc {
+  font-size: 11.5px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+/* ─── RIGHT PANEL ─── */
+.login-right {
+  width: 420px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px 52px;
+  background: #F7F4EF;
+  position: relative;
+  animation: rightReveal 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+.login-right::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(28, 28, 46, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+
+/* ─── FORM AREA ─── */
+.form-area {
+  position: relative;
+  z-index: 2;
+}
+
+.form-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #4A9E8E;
+  margin-bottom: 10px;
+}
+
+.form-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: #1C1C2E;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.form-sub {
+  font-size: 13.5px;
+  font-weight: 300;
+  color: #8888A8;
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+/* ─── FIELD ─── */
+.field {
+  margin-bottom: 20px;
+}
+
+.field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: #3D3D55;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.input-wrap {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  opacity: 0.35;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.input-wrap:focus-within .input-icon {
+  opacity: 0.75;
+}
+
+.cer-input {
+  width: 100%;
+  height: 52px;
+  padding: 0 44px 0 46px;
+  border: 1.5px solid rgba(28, 28, 46, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14.5px;
+  font-weight: 400;
+  color: #1C1C2E;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.cer-input::placeholder {
+  color: #8888A8;
+  font-weight: 300;
+}
+
+.cer-input:focus {
+  border-color: #4A9E8E;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(74, 158, 142, 0.12);
+}
+
+.toggle-pw {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.35;
+  line-height: 1;
+  transition: opacity 0.2s;
+}
+
+.toggle-pw:hover {
+  opacity: 0.65;
+}
+
+/* ─── FORM EXTRAS ─── */
+.form-extras {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.remember-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #4A9E8E;
+  cursor: pointer;
+}
+
+.remember-label {
+  font-size: 12.5px;
+  color: #8888A8;
+}
+
+.forgot-link {
+  font-size: 12.5px;
+  color: #4A9E8E;
+  font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.forgot-link:hover {
+  opacity: 0.7;
+}
+
+/* ─── LOGIN BUTTON ─── */
+.btn-login {
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 12px;
+  background: #1C1C2E;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14.5px;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.02em;
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.btn-login::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #4A9E8E 0%, #3A7A6C 100%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.btn-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(28, 28, 46, 0.22);
+}
+
+.btn-login:hover::before {
+  opacity: 1;
+}
+
+.btn-login:active {
+  transform: translateY(0);
+}
+
+.btn-login:disabled {
+  cursor: not-allowed;
+}
+
+.btn-login-text {
+  position: relative;
+  z-index: 1;
+  transition: opacity 0.15s;
+}
+
+.btn-login-text--hidden {
+  opacity: 0;
+}
+
+/* Loading spinner */
+.btn-login--loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  z-index: 2;
+}
+
+/* ─── DIVIDER ─── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+  color: #8888A8;
+  font-size: 12px;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(28, 28, 46, 0.1);
+}
+
+/* ─── ROLE CHIPS ─── */
+.role-chips {
+  display: flex;
+  gap: 10px;
+}
+
+.role-chip {
+  flex: 1;
+  height: 44px;
+  border: 1.5px solid rgba(28, 28, 46, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3D3D55;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: border-color 0.18s, color 0.18s, background 0.18s;
+}
+
+.role-chip:hover {
+  border-color: #4A9E8E;
+  color: #4A9E8E;
+  background: rgba(74, 158, 142, 0.1);
+}
+
+.chip-icon {
+  font-size: 15px;
+}
+
+/* ─── FORM FOOTER ─── */
+.form-footer {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(28, 28, 46, 0.08);
+  font-size: 12px;
+  color: #8888A8;
+  text-align: center;
+  line-height: 1.7;
+}
+
+.form-footer a {
+  color: #4A9E8E;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* ─── ANIMATIONS ─── */
+@keyframes panelReveal {
+  from { transform: translateX(-60px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+@keyframes rightReveal {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pillarIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-7px); }
+  40%       { transform: translateX(7px); }
+  60%       { transform: translateX(-5px); }
+  80%       { transform: translateX(5px); }
+}
+
+.shake {
+  animation: shake 0.38s ease-in-out;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+  .login-left  { display: none; }
+  .login-right { width: 100%; padding: 40px 28px; }
+}

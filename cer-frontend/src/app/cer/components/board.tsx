@@ -1,139 +1,148 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { DndContext, closestCenter, DragEndEvent  } from "@dnd-kit/core";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { CardType, ConnectionType, ConnectingFromType, COL_DEFS, ColumnType } from "../types";
 import Column from "./column";
-import ConnectionsLayer from "./connection-layers";
-import { CardType, ConnectionType } from "../types";
-import dynamic from "next/dynamic";
-import { useXarrow } from "react-xarrows";
-import { arrayMove } from "@dnd-kit/sortable";
+import ConnectionsLayer from "./connection-layer";
+import AddCardModal from "./add-card-modal";
+import Toast from "./toast";
+
+function uid() {
+  return "id_" + Math.random().toString(36).slice(2, 9);
+}
+
+const INITIAL_CARDS: CardType[] = [
+  { id: "c1", column: "claim", text: "MySQL adalah sistem manajemen basis data relasional yang dikembangkan oleh Oracle." },
+  { id: "c2", column: "claim", text: "Indeks pada database mempercepat pencarian data secara signifikan." },
+  { id: "e1", column: "evidence", text: "Menurut dokumentasi resmi MySQL, sistem ini menggunakan SQL sebagai bahasa kueri standar dan mendukung transaksi ACID penuh." },
+  { id: "e2", column: "evidence", text: "Benchmark menunjukkan query dengan indeks B-tree 100x lebih cepat dibanding full table scan pada tabel dengan 1 juta baris data." },
+  { id: "r1", column: "reasoning", text: "Dengan kemampuan transaksi ACID dan dukungan komunitas yang luas, MySQL menjadi pilihan utama untuk aplikasi skala besar yang membutuhkan konsistensi data tinggi." },
+  { id: "r2", column: "reasoning", text: "Performa indeks yang superior mendukung arsitektur database yang lebih efisien untuk aplikasi dengan beban kueri tinggi." },
+];
+
+const INITIAL_CONNECTIONS: ConnectionType[] = [
+  { id: "conn1", fromId: "c1", toId: "e1" },
+];
 
 export default function Board() {
-  const [cards, setCards] = useState<CardType[]>([
-    { id: "c1", content: "Claim 1", column: "claim" },
-    { id: "c2", content: "Claim 2", column: "claim" },
-    { id: "e1", content: "Evidence 1", column: "evidence" },
-    { id: "e2", content: "Evidence 2", column: "evidence" },
-    { id: "r1", content: "Reasoning 1", column: "reasoning" },
-    { id: "r2", content: "Reasoning 2", column: "reasoning" },
-  ]);
+  const [cards, setCards] = useState<CardType[]>(INITIAL_CARDS);
+  const [connections, setConnections] = useState<ConnectionType[]>(INITIAL_CONNECTIONS);
+  const [connectingFrom, setConnectingFrom] = useState<ConnectingFromType>(null);
+  const [addModalCol, setAddModalCol] = useState<ColumnType | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const Xwrapper = dynamic(
-        () => import("react-xarrows").then((mod) => mod.Xwrapper),
-        { ssr: false }
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2600);
+  }, []);
+
+  // Cancel connecting on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setConnectingFrom(null);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  const handleStartConnect = useCallback((cardId: string, column: ColumnType) => {
+    setConnectingFrom({ cardId, column });
+  }, []);
+
+  const handleCardClick = useCallback((targetId: string, targetCol: ColumnType) => {
+    if (!connectingFrom) return;
+
+    const sourceColDef = COL_DEFS.find((c) => c.id === connectingFrom.column);
+    if (!sourceColDef || sourceColDef.canConnectTo !== targetCol) return;
+
+    const alreadyConnected = connections.some(
+      (c) =>
+        (c.fromId === connectingFrom.cardId && c.toId === targetId) ||
+        (c.fromId === targetId && c.toId === connectingFrom.cardId)
     );
+    const sourceHasOutgoing = connections.some((c) => c.fromId === connectingFrom.cardId);
 
-    const claimCards = cards.filter((c) => c.column === "claim");
-    const evidenceCards = cards.filter((c) => c.column === "evidence");
-    const reasoningCards = cards.filter((c) => c.column === "reasoning");
-
-
-    const [connections, setConnections] = useState<ConnectionType[]>([]);
-    const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
-    const updateXarrow = useXarrow();
-    const [isDragging, setIsDragging] = useState(false);
-
-
-    function startConnecting(cardId: string) {
-        setConnectingFrom(cardId);
+    if (!alreadyConnected && !sourceHasOutgoing) {
+      setConnections((prev) => [
+        ...prev,
+        { id: uid(), fromId: connectingFrom.cardId, toId: targetId },
+      ]);
+      showToast("Koneksi berhasil dibuat!");
+    } else if (sourceHasOutgoing) {
+      showToast("Kartu ini sudah memiliki koneksi.");
+    } else {
+      showToast("Koneksi sudah ada.");
     }
 
-    function handleCardClick(cardId: string) {
-        if (!connectingFrom) return;
+    setConnectingFrom(null);
+  }, [connectingFrom, connections, showToast]);
 
-        if (connectingFrom !== cardId) {
-            setConnections((prev) => [
-            ...prev,
-            {
-                id: crypto.randomUUID(),
-                fromId: connectingFrom,
-                toId: cardId,
-            },
-            ]);
+  const handleRemoveConnection = useCallback((connId: string) => {
+    setConnections((prev) => prev.filter((c) => c.id !== connId));
+    showToast("Koneksi dihapus.");
+  }, [showToast]);
 
-            setTimeout(() => {
-            updateXarrow();
-            }, 0);
-        }
+  const handleDeleteCard = useCallback((cardId: string) => {
+    setCards((prev) => prev.filter((c) => c.id !== cardId));
+    setConnections((prev) => prev.filter((c) => c.fromId !== cardId && c.toId !== cardId));
+    showToast("Kartu dihapus.");
+  }, [showToast]);
 
-        setConnectingFrom(null);
-    }
-    
-    // useEffect(() => {
-    //     updateXarrow();
-    // }, [connections]);
-
-
-    function handleDragEnd(event: DragEndEvent) {
-        const { active, over } = event;
-
-        if (!over || active.id === over.id) return;
-
-        setCards((prev) => {
-            const oldIndex = prev.findIndex((c) => c.id === active.id);
-            const newIndex = prev.findIndex((c) => c.id === over.id);
-
-            return arrayMove(prev, oldIndex, newIndex);
-        });
-
-        setTimeout(() => {
-            updateXarrow();
-        }, 0);
-    }
-
-
-    useEffect(() => {
-        setConnections([
-            {
-            id: "test",
-            fromId: "c1",
-            toId: "e1",
-            },
-        ]);
-    }, []);
-
+  const handleAddCard = useCallback((text: string) => {
+    if (!addModalCol) return;
+    setCards((prev) => [...prev, { id: uid(), column: addModalCol, text }]);
+    setAddModalCol(null);
+  }, [addModalCol]);
 
   return (
-    <Xwrapper>
-
-        <DndContext 
-            collisionDetection={closestCenter}
-            // onDragEnd={handleDragEnd}
-            onDragStart={() => setIsDragging(true)}
-            onDragEnd={(event) => {
-                setIsDragging(false);
-                handleDragEnd(event);
-            }}
+    <>
+      {/* Connecting mode banner */}
+      {connectingFrom && (
+        <div
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full text-white text-sm font-bold shadow-lg cursor-pointer select-none"
+          style={{ background: "#5BA8D4", boxShadow: "0 4px 20px rgba(91,168,212,0.4)" }}
+          onClick={() => setConnectingFrom(null)}
         >
-            <div className="grid grid-cols-3 gap-6 relative">
-                <Column
-                    column="claim"
-                    cards={claimCards}
-                    onCardClick={handleCardClick}
-                    onStartConnect={startConnecting}
-                    connectingFrom={connectingFrom}
-                />
+          Pilih kartu {COL_DEFS.find(c => c.id === connectingFrom.column)?.canConnectTo} yang ingin dihubungkan &nbsp;·&nbsp; Klik di sini untuk batal
+        </div>
+      )}
 
-                <Column
-                    column="evidence"
-                    cards={evidenceCards}
-                    onCardClick={handleCardClick}
-                    onStartConnect={startConnecting}
-                    connectingFrom={connectingFrom}
-                />
+      <div className="flex gap-4 p-6 items-start min-h-screen bg-[#F2F4F8]">
+        {COL_DEFS.map((colDef) => {
+          const colCards = cards.filter((c) => c.column === colDef.id);
+          return (
+            <Column
+              key={colDef.id}
+              colDef={colDef}
+              cards={colCards}
+              connections={connections}
+              connectingFrom={connectingFrom}
+              onCardClick={handleCardClick}
+              onStartConnect={handleStartConnect}
+              onRemoveConnection={handleRemoveConnection}
+              onDeleteCard={handleDeleteCard}
+              onAddCard={() => setAddModalCol(colDef.id)}
+            />
+          );
+        })}
+      </div>
 
-                <Column
-                    column="reasoning"
-                    cards={reasoningCards}
-                    onCardClick={handleCardClick}
-                    onStartConnect={startConnecting}
-                    connectingFrom={connectingFrom}
-                />
-            </div>
+      {/* SVG arrows overlay */}
+      <ConnectionsLayer connections={connections} onRemove={handleRemoveConnection} />
 
-            <ConnectionsLayer connections={connections} />
-        </DndContext>
-    </Xwrapper>
+      {/* Add card modal */}
+      {addModalCol && (
+        <AddCardModal
+          column={addModalCol}
+          onConfirm={handleAddCard}
+          onClose={() => setAddModalCol(null)}
+        />
+      )}
+
+      {/* Toast */}
+      {toast && <Toast message={toast} />}
+    </>
   );
 }
