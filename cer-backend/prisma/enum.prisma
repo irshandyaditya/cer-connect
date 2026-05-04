@@ -1,0 +1,11 @@
+enum ColumnType {
+  CLAIM
+  EVIDENCE
+  REASONING
+}
+
+enum RoleType {
+  ADMIN
+  STUDENT
+  TEACHER
+}
