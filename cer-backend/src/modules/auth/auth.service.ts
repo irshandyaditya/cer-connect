@@ -48,6 +48,7 @@ export const login = async (data: any) => {
     const token = signToken({
         id: user.id,
         role: user.role.name,
+        group: user.groupId || null,
     });
 
     return {

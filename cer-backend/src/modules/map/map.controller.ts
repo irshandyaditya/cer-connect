@@ -13,6 +13,8 @@ export const createMap = async (req: AuthRequest, res: Response) => {
 };
 
 export const getMaps = async (req: AuthRequest, res: Response) => {
-  const maps = await MapService.getMapsByGroup(req.user!.groupId!);
-  return R.ok(res, "Maps fetched", maps);
+    console.log("hh")
+    const maps = await MapService.getMapsByGroup(req.user!.groupId!);
+    console.log("hh2")
+    return R.ok(res, "Maps fetched", maps);
 };
