@@ -33,7 +33,7 @@ export const authenticate = async (
     const payload = jwt.verify(token, SECRET) as any;
 
     const user = await prisma.user.findUnique({
-      where: { id: payload.sub },
+      where: { id: payload.id },
       include: { role: true },
     });
 
@@ -59,7 +59,7 @@ export const authorize =
     if (!req.user) return R.unauthorized(res);
 
     if (!allowedRoles.includes(req.user.role)) {
-      return R.forbidden(res, "Forbidden");
+      return R.forbidden(res, "Forbidden Role");
     }
 
     next();
@@ -85,7 +85,7 @@ export const authorize =
 //     next();
 //   };
 
-  export const generateToken = (userId: string) => {
+export const generateToken = (userId: string) => {
   const expires = parseDurationToSeconds(JWT_EXPIRES_IN);
 
   return sign({}, SECRET, {
