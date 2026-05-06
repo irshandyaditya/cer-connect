@@ -3,9 +3,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { CardType, ConnectionType, ConnectingFromType, COL_DEFS, ColumnType } from "../types";
 import Column from "./column";
-import ConnectionsLayer from "./connection-layer";
 import AddCardModal from "./add-card-modal";
 import Toast from "./toast";
+import ConnectionsLayer from "./connection-layer";
 
 function uid() {
   return "id_" + Math.random().toString(36).slice(2, 9);
@@ -69,6 +69,29 @@ export default function Board() {
         ...prev,
         { id: uid(), fromId: connectingFrom.cardId, toId: targetId },
       ]);
+
+      // Reorder: pindahkan card target ke posisi yang sejajar dengan card sumber
+      setCards((prev) => {
+        const sourceColCards = prev.filter((c) => c.column === connectingFrom.column);
+        const sourceIndex    = sourceColCards.findIndex((c) => c.id === connectingFrom.cardId);
+
+        const targetColCards = prev.filter((c) => c.column === targetCol);
+        const targetIndex    = targetColCards.findIndex((c) => c.id === targetId);
+
+        // Sudah di posisi yang benar, tidak perlu diubah
+        if (sourceIndex === -1 || targetIndex === -1 || targetIndex === sourceIndex) return prev;
+
+        // Ambil card target, sisipkan di sourceIndex dalam kolom target
+        const newTargetColCards = [...targetColCards];
+        const [moved] = newTargetColCards.splice(targetIndex, 1);
+        newTargetColCards.splice(sourceIndex, 0, moved);
+
+        // Gabungkan kembali: pertahankan urutan kolom lain, ganti kolom target
+        return prev
+          .filter((c) => c.column !== targetCol)
+          .concat(newTargetColCards);
+      });
+
       showToast("Koneksi berhasil dibuat!");
     } else if (sourceHasOutgoing) {
       showToast("Kartu ini sudah memiliki koneksi.");
