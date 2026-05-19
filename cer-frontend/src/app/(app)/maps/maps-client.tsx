@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { getMaps, createMap, MapItem, CreateMapPayload } from "@/lib/api";
+import { getMaps, createMap, MapItem, CreateMapPayload, GroupItem, getGroups } from "@/lib/api";
 import { useAuth } from "@/store/auth-store";
 
 function formatDate(iso: string) {
@@ -30,19 +30,32 @@ export default function MapsClient() {
   const [error, setError]     = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
 
+  const [groups, setGroups] = useState<GroupItem[]>([]);
+
   const fetchMaps = useCallback(async () => {
-    if (!token) { router.replace("/login"); return; }
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+
     setLoading(true);
     setError(null);
+
     try {
-      const res = await getMaps(token);
-      setMaps(res.data);
+      const mapsRes = await getMaps(token);
+
+      setMaps(mapsRes.data);
+
+      if (role === "TEACHER") {
+        const groupsRes = await getGroups(token);
+        setGroups(groupsRes.data);
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Gagal memuat data.");
     } finally {
       setLoading(false);
     }
-  }, [token, router]);
+  }, [token, router, role]);
 
   useEffect(() => { fetchMaps(); }, [fetchMaps]);
 
@@ -131,10 +144,14 @@ export default function MapsClient() {
 
       {showAdd && (
         <AddMapModal
+          groups={groups}
           defaultGroupId={groupId ?? ""}
           token={token!}
           onClose={() => setShowAdd(false)}
-          onCreated={() => { setShowAdd(false); fetchMaps(); }}
+          onCreated={() => {
+            setShowAdd(false);
+            fetchMaps();
+          }}
         />
       )}
     </div>
@@ -199,16 +216,24 @@ function MapCard({ map, onClick }: { map: MapItem; onClick: () => void }) {
 }
 
 type AddMapForm = {
-  title: string; description: string; documentUrl: string; timeoutAt: string; groupId: string;
+  title: string;
+  description: string;
+  document: File | null;
+  timeoutAt: string;
+  groupId: string;
 };
 
 function AddMapModal({
-  defaultGroupId, token, onClose, onCreated,
+  groups, defaultGroupId, token, onClose, onCreated,
 }: {
-  defaultGroupId: string; token: string; onClose: () => void; onCreated: () => void;
+  groups: GroupItem[], defaultGroupId: string; token: string; onClose: () => void; onCreated: () => void;
 }) {
   const [form, setForm] = useState<AddMapForm>({
-    title: "", description: "", documentUrl: "", timeoutAt: "", groupId: defaultGroupId,
+    title: "",
+    description: "",
+    document: null,
+    timeoutAt: "",
+    groupId: defaultGroupId,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
@@ -219,20 +244,24 @@ function AddMapModal({
 
   async function handleSubmit() {
     if (!form.title.trim() || !form.timeoutAt || !form.groupId.trim()) {
-      setError("Judul, tenggat waktu, dan Group ID wajib diisi.");
+      setError("Judul, tenggat waktu, dan group wajib diisi.");
       return;
     }
+
     setLoading(true);
     setError(null);
+
     try {
       const payload: CreateMapPayload = {
         title: form.title.trim(),
         description: form.description.trim() || undefined,
-        documentUrl: form.documentUrl.trim() || undefined,
+        document: form.document,
         timeoutAt: new Date(form.timeoutAt).toISOString(),
-        groupId: form.groupId.trim(),
+        groupId: form.groupId,
       };
+
       await createMap(token, payload);
+
       onCreated();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Gagal membuat map.");
@@ -267,8 +296,51 @@ function AddMapModal({
           )}
           <ModalField label="Judul *" value={form.title} onChange={(v) => update("title", v)} placeholder="Contoh: Relational Database" />
           <ModalField label="Deskripsi" value={form.description} onChange={(v) => update("description", v)} placeholder="Deskripsi singkat materi..." textarea />
-          <ModalField label="URL Dokumen" value={form.documentUrl} onChange={(v) => update("documentUrl", v)} placeholder="https://example.com/doc.pdf" />
-          <ModalField label="Group ID *" value={form.groupId} onChange={(v) => update("groupId", v)} placeholder="Group ID kelompok" />
+          <div>
+            <label className="block text-[11px] font-medium uppercase tracking-wide text-gray-500 mb-1.5">
+              Dokumen
+            </label>
+
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.ppt,.pptx"
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null;
+
+                setForm((f) => ({
+                  ...f,
+                  document: file,
+                }));
+              }}
+              className="w-full h-[40px] py-1 px-3 text-[13px] border border-gray-200 rounded-lg text-gray-700 file:mr-3 file:border-0 file:bg-[#1C1C2E] file:text-white file:px-3 file:h-[28px] file:rounded-md file:text-[12px]"
+            />
+
+            {form.document && (
+              <p className="mt-2 text-[12px] text-gray-500">
+                {form.document.name}
+              </p>
+            )}
+          </div>
+          
+          <div>
+            <label className="block text-[11px] font-medium uppercase tracking-wide text-gray-500 mb-1.5">
+              Group *
+            </label>
+
+            <select
+              value={form.groupId}
+              onChange={(e) => update("groupId", e.target.value)}
+              className="w-full h-[40px] px-3 text-[13.5px] border border-gray-200 rounded-lg text-gray-800 outline-none focus:border-[#4A9E8E] focus:ring-2 focus:ring-[#4A9E8E]/15 transition"
+            >
+              <option value="">Pilih Group</option>
+
+              {groups.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <ModalField label="Tenggat Waktu *" value={form.timeoutAt} onChange={(v) => update("timeoutAt", v)} type="datetime-local" />
         </div>
 

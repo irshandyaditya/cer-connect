@@ -23,6 +23,17 @@ export type LoginResponse = {
   };
 };
 
+export type GroupItem = {
+  id: string;
+  name: string;
+};
+
+export type GroupsResponse = {
+  status: string;
+  message: string;
+  data: GroupItem[];
+};
+
 export type JwtPayload = {
   id: string;
   role: "STUDENT" | "TEACHER";
@@ -56,7 +67,7 @@ export type MapsResponse = {
 export type CreateMapPayload = {
   title: string;
   description?: string;
-  documentUrl?: string;
+  document?: File | null;
   timeoutAt: string;
   groupId: string;
 };
@@ -73,6 +84,22 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.message ?? "Login gagal. Periksa username dan password.");
+  }
+
+  return res.json();
+}
+
+export async function getGroups(token: string): Promise<GroupsResponse> {
+  const res = await fetch(`${BASE_URL}/auths/groups`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message ?? "Gagal memuat daftar group.");
   }
 
   return res.json();

@@ -6,15 +6,42 @@ import { AuthRequest } from "../../middleware/auth";
 
 export const createMap = async (req: AuthRequest, res: Response) => {
   const { error, value } = createMapSchema.validate(req.body);
-  if (error) return R.badRequest(res, error.details?.[0]?.message);
 
-  const data = await MapService.createMap(value, req.user!.id);
+  if (error) {
+    return R.badRequest(res, error.details?.[0]?.message);
+  }
+
+  if (req.file) {
+    const allowedMimeTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ];
+
+    if (!allowedMimeTypes.includes(req.file.mimetype)) {
+      return R.badRequest(
+        res,
+        "Only PDF, DOC, DOCX, PPT, and PPTX files are allowed"
+      );
+    }
+  }
+
+  const data = await MapService.createMap(
+    value,
+    req.user!.id,
+    req.file
+  );
+
   return R.created(res, "Map created", data);
 };
 
 export const getMaps = async (req: AuthRequest, res: Response) => {
-    console.log("hh")
-    const maps = await MapService.getMapsByGroup(req.user!.groupId!);
-    console.log("hh2")
-    return R.ok(res, "Maps fetched", maps);
+  if (!req.user) return R.unauthorized(res, "User not logged in");
+
+  if (req.user.role == "TEACHER") return R.ok(res, "Maps fetched", await MapService.getAllMaps());
+  const maps = await MapService.getMapsByGroup(req.user!.groupId!);
+
+  return R.ok(res, "Maps fetched", maps);
 };

@@ -61,3 +61,7 @@ export const login = async (data: any) => {
         },
     };
 };
+
+export const getAllGroups = async () => {
+  return prisma.group.findMany({});
+};

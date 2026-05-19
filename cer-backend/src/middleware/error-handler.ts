@@ -1,6 +1,7 @@
 import {NextFunction, Request, Response} from 'express';
 import * as R from '../utils/response';
 import { Prisma } from '@prisma/client';
+import multer from 'multer';
 
 export const errorHandler = (
     err: any,
@@ -8,6 +9,23 @@ export const errorHandler = (
     res: Response,
     _next: NextFunction
 ): void => {
+    if (err instanceof multer.MulterError) {
+        switch (err.code) {
+            case 'LIMIT_UNEXPECTED_FILE':
+                R.badRequest(res, "Expected a file field named 'file'. Only one file is allowed.");
+                return;
+            case 'LIMIT_FILE_SIZE':
+                R.payloadTooLarge(res, "Uploaded file is too large. Please upload a smaller file.");
+                return;
+            case 'LIMIT_FILE_COUNT':
+                R.badRequest(res, "Too many files uploaded. Only one file is allowed.");
+                return;
+            default:
+                R.badRequest(res, err.message || "File upload error.");
+                return;
+        }
+    }
+
     if (err instanceof Prisma.PrismaClientValidationError) {
         R.unprocessableEntity(res, 'Invalid data input.');
         return;

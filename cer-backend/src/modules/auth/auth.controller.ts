@@ -32,3 +32,12 @@ export const login = async (req: Request, res: Response) => {
         return R.unauthorized(res, err.message);
     }
 };
+
+export const getAllGroups = async (req: Request, res: Response) => {
+    try {
+        const data = await AuthService.getAllGroups();
+        return R.ok(res, "Groups fetched", data);
+    } catch (err: any) {
+        return R.badRequest(res, err.message);
+    }
+};
