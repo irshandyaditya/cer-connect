@@ -6,6 +6,11 @@ export const createMap = async (
   teacherId: string,
   file?: Express.Multer.File
 ) => {
+  const {
+    document,
+    ...payload
+  } = data;
+
   let documentUrl: string | undefined;
 
   if (file) {
@@ -15,7 +20,7 @@ export const createMap = async (
 
   return prisma.map.create({
     data: {
-      ...data,
+      ...payload,
       teacherId,
       documentUrl,
     },
