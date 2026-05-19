@@ -40,28 +40,9 @@
   pointer-events: none;
 }
 
-.geo-ring--large {
-  width: 420px;
-  height: 420px;
-  right: -160px;
-  top: -120px;
-}
-
-.geo-ring--medium {
-  width: 280px;
-  height: 280px;
-  right: -80px;
-  bottom: 60px;
-  border-color: rgba(74, 158, 142, 0.15);
-}
-
-.geo-ring--small {
-  width: 150px;
-  height: 150px;
-  left: 60px;
-  bottom: 160px;
-  border-color: rgba(212, 136, 74, 0.15);
-}
+.geo-ring--large  { width: 420px; height: 420px; right: -160px; top: -120px; }
+.geo-ring--medium { width: 280px; height: 280px; right: -80px; bottom: 60px; border-color: rgba(74, 158, 142, 0.15); }
+.geo-ring--small  { width: 150px; height: 150px; left: 60px; bottom: 160px; border-color: rgba(212, 136, 74, 0.15); }
 
 /* ─── LEFT TOP ─── */
 .left-top {
@@ -161,8 +142,8 @@
   flex-shrink: 0;
 }
 
-.pillar-letter--c { background: rgba(74, 158, 142, 0.2);  color: #6DBDAD; }
-.pillar-letter--e { background: rgba(212, 136, 74, 0.18); color: #E8AA78; }
+.pillar-letter--c { background: rgba(74, 158, 142, 0.2);   color: #6DBDAD; }
+.pillar-letter--e { background: rgba(212, 136, 74, 0.18);  color: #E8AA78; }
 .pillar-letter--r { background: rgba(155, 124, 196, 0.18); color: #C4A8DF; }
 
 .pillar-label {
@@ -229,8 +210,24 @@
   font-size: 13.5px;
   font-weight: 300;
   color: #8888A8;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
   line-height: 1.6;
+}
+
+/* ─── ERROR BANNER ─── */
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(220, 60, 60, 0.08);
+  border: 1px solid rgba(220, 60, 60, 0.2);
+  color: #C03030;
+  font-size: 13px;
+  font-weight: 400;
+  margin-bottom: 20px;
+  animation: rightReveal 0.3s ease both;
 }
 
 /* ─── FIELD ─── */
@@ -281,6 +278,7 @@
   color: #1C1C2E;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-sizing: border-box;
 }
 
 .cer-input::placeholder {
@@ -308,49 +306,7 @@
   transition: opacity 0.2s;
 }
 
-.toggle-pw:hover {
-  opacity: 0.65;
-}
-
-/* ─── FORM EXTRAS ─── */
-.form-extras {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 28px;
-}
-
-.remember {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.remember-checkbox {
-  width: 16px;
-  height: 16px;
-  accent-color: #4A9E8E;
-  cursor: pointer;
-}
-
-.remember-label {
-  font-size: 12.5px;
-  color: #8888A8;
-}
-
-.forgot-link {
-  font-size: 12.5px;
-  color: #4A9E8E;
-  font-weight: 500;
-  text-decoration: none;
-  transition: opacity 0.15s;
-}
-
-.forgot-link:hover {
-  opacity: 0.7;
-}
+.toggle-pw:hover { opacity: 0.65; }
 
 /* ─── LOGIN BUTTON ─── */
 .btn-login {
@@ -367,6 +323,7 @@
   position: relative;
   overflow: hidden;
   letter-spacing: 0.02em;
+  margin-top: 8px;
   transition: transform 0.15s, box-shadow 0.2s;
 }
 
@@ -379,22 +336,10 @@
   transition: opacity 0.3s;
 }
 
-.btn-login:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(28, 28, 46, 0.22);
-}
-
-.btn-login:hover::before {
-  opacity: 1;
-}
-
-.btn-login:active {
-  transform: translateY(0);
-}
-
-.btn-login:disabled {
-  cursor: not-allowed;
-}
+.btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(28, 28, 46, 0.22); }
+.btn-login:hover::before { opacity: 1; }
+.btn-login:active { transform: translateY(0); }
+.btn-login:disabled { cursor: not-allowed; }
 
 .btn-login-text {
   position: relative;
@@ -402,11 +347,8 @@
   transition: opacity 0.15s;
 }
 
-.btn-login-text--hidden {
-  opacity: 0;
-}
+.btn-login-text--hidden { opacity: 0; }
 
-/* Loading spinner */
 .btn-login--loading::after {
   content: '';
   position: absolute;
@@ -420,73 +362,6 @@
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   z-index: 2;
-}
-
-/* ─── DIVIDER ─── */
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 24px 0;
-  color: #8888A8;
-  font-size: 12px;
-}
-
-.divider-line {
-  flex: 1;
-  height: 1px;
-  background: rgba(28, 28, 46, 0.1);
-}
-
-/* ─── ROLE CHIPS ─── */
-.role-chips {
-  display: flex;
-  gap: 10px;
-}
-
-.role-chip {
-  flex: 1;
-  height: 44px;
-  border: 1.5px solid rgba(28, 28, 46, 0.12);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.6);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  color: #3D3D55;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  transition: border-color 0.18s, color 0.18s, background 0.18s;
-}
-
-.role-chip:hover {
-  border-color: #4A9E8E;
-  color: #4A9E8E;
-  background: rgba(74, 158, 142, 0.1);
-}
-
-.chip-icon {
-  font-size: 15px;
-}
-
-/* ─── FORM FOOTER ─── */
-.form-footer {
-  margin-top: 36px;
-  padding-top: 24px;
-  border-top: 1px solid rgba(28, 28, 46, 0.08);
-  font-size: 12px;
-  color: #8888A8;
-  text-align: center;
-  line-height: 1.7;
-}
-
-.form-footer a {
-  color: #4A9E8E;
-  text-decoration: none;
-  font-weight: 500;
 }
 
 /* ─── ANIMATIONS ─── */
@@ -517,9 +392,7 @@
   80%       { transform: translateX(5px); }
 }
 
-.shake {
-  animation: shake 0.38s ease-in-out;
-}
+.shake { animation: shake 0.38s ease-in-out; }
 
 /* ─── RESPONSIVE ─── */
 @media (max-width: 768px) {

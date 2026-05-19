@@ -3,15 +3,15 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-
-// TODO: ganti dengan data user dari auth kamu (session/context)
-const MOCK_USER = { fullName: "Bjorka Admin" };
+import { useAuth } from "@/store/auth-store";
 
 const NAV_LINKS = [{ href: "/maps", label: "Daftar Map" }];
 
 export default function AppHeader() {
   const router   = useRouter();
   const pathname = usePathname();
+  const { user, role, clearAuth } = useAuth();
+
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -24,8 +24,8 @@ export default function AppHeader() {
   }, []);
 
   function handleLogout() {
-    // TODO: panggil signOut() dari NextAuth atau hapus token/cookie
-    router.push("/login");
+    clearAuth();
+    router.replace("/login");
   }
 
   return (
@@ -67,7 +67,8 @@ export default function AppHeader() {
           onClick={() => setOpen((v) => !v)}
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[13px] text-gray-500 hover:bg-gray-100 transition-colors"
         >
-          Halo,&nbsp;<span className="font-medium text-gray-900">{MOCK_USER.fullName}</span>
+          Halo,&nbsp;
+          <span className="font-medium text-gray-900">{user?.fullName ?? "..."}</span>
           <svg
             width="12" height="12" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
@@ -78,10 +79,17 @@ export default function AppHeader() {
         </button>
 
         {open && (
-          <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden animate-dropdown">
+          <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden animate-dropdown">
             <div className="px-4 py-2.5 border-b border-gray-100">
               <p className="text-[11px] text-gray-400 mb-0.5">Masuk sebagai</p>
-              <p className="text-[13px] font-medium text-gray-900 truncate">{MOCK_USER.fullName}</p>
+              <p className="text-[13px] font-medium text-gray-900 truncate">{user?.fullName}</p>
+              <span className={`inline-block mt-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                role === "TEACHER"
+                  ? "bg-[#4A9E8E]/10 text-[#4A9E8E]"
+                  : "bg-blue-50 text-blue-600"
+              }`}>
+                {role === "TEACHER" ? "Dosen" : "Mahasiswa"}
+              </span>
             </div>
             <button
               onClick={handleLogout}

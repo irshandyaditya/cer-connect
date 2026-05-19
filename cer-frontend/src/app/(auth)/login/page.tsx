@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { login } from "@/lib/api";
+import { useAuth } from "@/store/auth-store";
 import "./login.css";
+
+// ── Constants ──────────────────────────────────────────────────────────
 
 const PILLARS = [
   { key: "c", letter: "C", label: "Claim",     desc: "Pernyataan utama yang ingin dibuktikan" },
@@ -10,35 +14,46 @@ const PILLARS = [
   { key: "r", letter: "R", label: "Reasoning", desc: "Penjelasan logis yang menghubungkan keduanya" },
 ];
 
-const ROLES = [
-  { icon: "🎓", label: "Mahasiswa" },
-  { icon: "👨‍🏫", label: "Dosen" },
-];
+// ── Page ───────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
-  const router = useRouter();
+  const router        = useRouter();
+  const { setAuth }   = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername]         = useState("");
   const [password, setPassword]         = useState("");
   const [loading, setLoading]           = useState(false);
   const [shaking, setShaking]           = useState(false);
+  const [errorMsg, setErrorMsg]         = useState<string | null>(null);
 
-  function handleLogin() {
+  async function handleLogin() {
+    setErrorMsg(null);
+
     if (!username.trim() || !password) {
       setShaking(true);
       setTimeout(() => setShaking(false), 400);
       return;
     }
+
     setLoading(true);
-    // TODO: ganti dengan logika auth kamu (NextAuth, JWT, dsb.)
-    setTimeout(() => {
+    try {
+      const res = await login({ username: username.trim(), password });
+      setAuth(res.data.token, res.data.user);
+      router.push("/maps");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Terjadi kesalahan.";
+      setErrorMsg(msg);
+      setShaking(true);
+      setTimeout(() => setShaking(false), 400);
+    } finally {
       setLoading(false);
-      router.push("/cer");
-    }, 1500);
+    }
   }
 
   return (
     <div className="login-root">
+      {/* ── Left Panel ── */}
       <div className="login-left">
         <div className="geo-ring geo-ring--large" />
         <div className="geo-ring geo-ring--medium" />
@@ -73,6 +88,7 @@ export default function LoginPage() {
         </div>
       </div>
 
+      {/* ── Right Panel ── */}
       <div className="login-right">
         <div className={`form-area ${shaking ? "shake" : ""}`}>
           <p className="form-eyebrow">Selamat datang kembali</p>
@@ -84,6 +100,17 @@ export default function LoginPage() {
             argumen Anda hari ini.
           </p>
 
+          {/* Error banner */}
+          {errorMsg && (
+            <div className="error-banner" role="alert">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              {errorMsg}
+            </div>
+          )}
+
+          {/* Username field */}
           <div className="field">
             <label className="field-label" htmlFor="username">Username</label>
             <div className="input-wrap">
@@ -104,6 +131,7 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Password field */}
           <div className="field">
             <label className="field-label" htmlFor="password">Password</label>
             <div className="input-wrap">
@@ -143,14 +171,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* <div className="form-extras">
-            <label className="remember">
-              <input type="checkbox" className="remember-checkbox" />
-              <span className="remember-label">Ingat saya</span>
-            </label>
-            <a href="#" className="forgot-link">Lupa password?</a>
-          </div> */}
-
           <button
             className={`btn-login ${loading ? "btn-login--loading" : ""}`}
             disabled={loading}
@@ -160,26 +180,6 @@ export default function LoginPage() {
               Masuk Sekarang
             </span>
           </button>
-
-          {/* <div className="divider">
-            <div className="divider-line" />
-            atau masuk sebagai
-            <div className="divider-line" />
-          </div>
-
-          <div className="role-chips">
-            {ROLES.map((r) => (
-              <button key={r.label} className="role-chip">
-                <span className="chip-icon">{r.icon}</span>
-                {r.label}
-              </button>
-            ))}
-          </div> */}
-
-          {/* <div className="form-footer">
-            Belum punya akun? <a href="#">Daftar di sini</a><br />
-            Butuh bantuan? <a href="#">Hubungi administrator</a>
-          </div> */}
         </div>
       </div>
     </div>
