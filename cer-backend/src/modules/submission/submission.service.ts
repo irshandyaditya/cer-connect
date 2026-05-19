@@ -27,25 +27,24 @@ export const calculateScore = async (submissionId: string, mapId: string) => {
         where: { submissionId },
     });
 
-    let correct = 0;
+    const correctAnswers: { fromId: string; toId: string }[] = [];
 
     for (const ans of studentAnswers) {
         const match = teacherConnections.find(
-        tc => tc.fromId === ans.fromId && tc.toId === ans.toId
+            tc => tc.fromId === ans.fromId && tc.toId === ans.toId
         );
-
-        if (match) correct++;
+        if (match) correctAnswers.push({ fromId: ans.fromId, toId: ans.toId });
     }
 
     const score =
         teacherConnections.length === 0
         ? 0
-        : (correct / teacherConnections.length) * 100;
+        : (correctAnswers.length / teacherConnections.length) * 100;
 
     await prisma.submission.update({
         where: { id: submissionId },
         data: { score },
     });
 
-    return score;
+    return { score, correctAnswers };
 };

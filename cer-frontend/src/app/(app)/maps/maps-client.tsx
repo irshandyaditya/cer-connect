@@ -137,7 +137,7 @@ export default function MapsClient() {
       ) : (
         <div className="flex flex-col gap-2.5">
           {filtered.map((map) => (
-            <MapCard key={map.id} map={map} onClick={() => router.push(`/cer`)} />
+            <MapCard key={map.id} map={map} onClick={() => router.push(`/cer?mapId=${map.id}`)} />
           ))}
         </div>
       )}

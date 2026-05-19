@@ -16,10 +16,10 @@ export const submit = async (req: AuthRequest, res: Response) => {
     value.answers
   );
 
-  const score = await Service.calculateScore(
+  const { score, correctAnswers } = await Service.calculateScore(
     submission.id,
     value.mapId
   );
 
-  return R.ok(res, "Submitted", { submissionId: submission.id, score });
+  return R.ok(res, "Submitted", { submissionId: submission.id, score, correctAnswers });
 };

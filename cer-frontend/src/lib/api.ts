@@ -58,6 +58,25 @@ export type MapItem = {
   };
 };
 
+export type CardItem = {
+  id: string;
+  text: string;
+  column: "CLAIM" | "EVIDENCE" | "REASONING";
+  mapId: string;
+};
+
+export type ConnectionItem = {
+  id: string;
+  mapId: string;
+  fromId: string;
+  toId: string;
+};
+
+export type MapDetail = MapItem & {
+  cards: CardItem[];
+  connections: ConnectionItem[];
+};
+
 export type MapsResponse = {
   status: string;
   message: string;
@@ -123,6 +142,25 @@ export async function getMaps(token: string): Promise<MapsResponse> {
   return res.json();
 }
 
+export async function getMapDetail(
+  token: string,
+  mapId: string
+): Promise<{ status: string; message: string; data: MapDetail }> {
+  const res = await fetch(`${BASE_URL}/maps/${mapId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message ?? "Gagal memuat detail map.");
+  }
+
+  return res.json();
+}
+
 export async function createMap(
   token: string,
   payload: CreateMapPayload
@@ -157,6 +195,106 @@ export async function createMap(
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.message ?? "Gagal membuat map baru.");
+  }
+
+  return res.json();
+}
+
+
+// ── Cards ──────────────────────────────────────────────────────────────
+
+export type CardPayloadItem = {
+  text: string;
+  column: "CLAIM" | "EVIDENCE" | "REASONING";
+};
+
+export type CardResult = {
+  id: string;
+  text: string;
+  column: string;
+  mapId: string;
+};
+
+export async function createCards(
+  token: string,
+  mapId: string,
+  cards: CardPayloadItem[]
+): Promise<{ status: string; message: string; data: CardResult[] }> {
+  const res = await fetch(`${BASE_URL}/cards/${mapId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(cards),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message ?? "Gagal menyimpan cards.");
+  }
+
+  return res.json();
+}
+
+// ── Connections ────────────────────────────────────────────────────────
+
+export type ConnectionPayloadItem = {
+  fromId: string;
+  toId: string;
+};
+
+export async function createConnections(
+  token: string,
+  mapId: string,
+  connections: ConnectionPayloadItem[]
+): Promise<{ status: string; message: string; data: unknown }> {
+  const res = await fetch(`${BASE_URL}/connections/${mapId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(connections),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message ?? "Gagal menyimpan connections.");
+  }
+
+  return res.json();
+}
+
+// ── Submissions ────────────────────────────────────────────────────────
+
+export type SubmitPayload = {
+  mapId: string;
+  answers: ConnectionPayloadItem[];
+};
+
+export type SubmitResult = {
+  submissionId: string;
+  score: number;
+  correctAnswers: { fromId: string; toId: string }[];
+};
+
+export async function submitAnswers(
+  token: string,
+  payload: SubmitPayload
+): Promise<{ status: string; message: string; data: SubmitResult }> {
+  const res = await fetch(`${BASE_URL}/submissions/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message ?? "Gagal submit jawaban.");
   }
 
   return res.json();

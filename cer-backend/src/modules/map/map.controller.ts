@@ -4,6 +4,22 @@ import * as MapService from "./map.service";
 import { createMapSchema } from "./map.dto";
 import { AuthRequest } from "../../middleware/auth";
 
+export const getMap = async (req: AuthRequest, res: Response) => {
+  if (!req.user) return R.unauthorized(res, "User not logged in");
+
+  const { mapId } = req.params;
+  const map = await MapService.getMapById(String(mapId), req.user.role) as any;
+
+  if (!map) return R.notFound(res, "Map tidak ditemukan");
+
+  // Untuk student: filter submissions hanya milik user ini
+  if (req.user.role === "STUDENT" && map.submissions) {
+    map.submissions = map.submissions.filter((s: any) => s.userId === req.user!.id);
+  }
+
+  return R.ok(res, "Map fetched", map);
+};
+
 export const createMap = async (req: AuthRequest, res: Response) => {
   const { error, value } = createMapSchema.validate(req.body);
 
@@ -45,7 +61,11 @@ export const getMaps = async (req: AuthRequest, res: Response) => {
   if (!req.user) return R.unauthorized(res, "User not logged in");
 
   if (req.user.role == "TEACHER") return R.ok(res, "Maps fetched", await MapService.getAllMaps());
-  const maps = await MapService.getMapsByGroup(req.user!.groupId!);
 
-  return R.ok(res, "Maps fetched", maps);
+  const maps = await MapService.getMapsByGroup(req.user!.groupId!, req.user.role);
+
+  // Untuk student: sembunyikan map yang belum ada cards (belum dikerjakan guru)
+  const filtered = maps.filter((m: any) => m.cards && m.cards.length > 0);
+
+  return R.ok(res, "Maps fetched", filtered);
 };

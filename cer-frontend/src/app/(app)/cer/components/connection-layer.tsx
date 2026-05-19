@@ -13,9 +13,11 @@ type PathData = {
 type Props = {
   connections: ConnectionType[];
   onRemove: (connId: string) => void;
+  reviewMode?: boolean;
+  correctConnIds?: Set<string>;
 };
 
-export default function ConnectionsLayer({ connections, onRemove }: Props) {
+export default function ConnectionsLayer({ connections, onRemove, reviewMode = false, correctConnIds = new Set() }: Props) {
   const [paths, setPaths] = useState<PathData[]>([]);
 
   const computePaths = useCallback(() => {
@@ -34,10 +36,7 @@ export default function ConnectionsLayer({ connections, onRemove }: Props) {
       const y2 = tr.top + tr.height / 2 + window.scrollY;
 
       const dx = (x2 - x1) * 0.45;
-
       const d = `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
-
-      // Midpoint for hit area
       const midX = (x1 + x2) / 2;
       const midY = (y1 + y2) / 2 - Math.abs(y2 - y1) * 0.15;
 
@@ -71,62 +70,91 @@ export default function ConnectionsLayer({ connections, onRemove }: Props) {
       }}
     >
       <defs>
-        <marker
-          id="cer-arrow"
-          markerWidth="8"
-          markerHeight="7"
-          refX="7"
-          refY="3.5"
-          orient="auto"
-        >
+        <marker id="cer-arrow" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
           <polygon points="0 0, 8 3.5, 0 7" fill="#5BA8D4" />
+        </marker>
+        <marker id="cer-arrow-correct" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
+          <polygon points="0 0, 8 3.5, 0 7" fill="#22c55e" />
+        </marker>
+        <marker id="cer-arrow-wrong" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
+          <polygon points="0 0, 8 3.5, 0 7" fill="#ef4444" />
         </marker>
       </defs>
 
-      {paths.map((p) => (
-        <g key={p.id} style={{ pointerEvents: "all" }}>
-          {/* Invisible wide stroke for easy clicking */}
-          <path
-            d={p.d}
-            fill="none"
-            stroke="transparent"
-            strokeWidth={16}
-            style={{ cursor: "pointer" }}
-            onClick={() => onRemove(p.id)}
-          />
-          {/* Visible dashed line */}
-          <path
-            d={p.d}
-            fill="none"
-            stroke="#5BA8D4"
-            strokeWidth={2.5}
-            strokeDasharray="6 3"
-            markerEnd="url(#cer-arrow)"
-            style={{ pointerEvents: "none" }}
-          />
-          {/* Delete hit circle at midpoint */}
-          <circle
-            cx={p.midX}
-            cy={p.midY}
-            r={10}
-            fill="white"
-            stroke="#5BA8D4"
-            strokeWidth={1.5}
-            style={{ cursor: "pointer" }}
-            onClick={() => onRemove(p.id)}
-          />
-          <text
-            x={p.midX}
-            y={p.midY + 4.5}
-            textAnchor="middle"
-            fontSize={12}
-            fill="#cc5555"
-            style={{ cursor: "pointer", userSelect: "none", pointerEvents: "none" }}
-          >
-            ✕
-          </text>
-        </g>
-      ))}
+      {paths.map((p) => {
+        const isCorrect = correctConnIds.has(p.id);
+        const color = reviewMode
+          ? (isCorrect ? "#22c55e" : "#ef4444")
+          : "#5BA8D4";
+        const arrowId = reviewMode
+          ? (isCorrect ? "cer-arrow-correct" : "cer-arrow-wrong")
+          : "cer-arrow";
+
+        return (
+          <g key={p.id} style={{ pointerEvents: "all" }}>
+            {/* Invisible wide stroke for easy clicking */}
+            <path
+              d={p.d}
+              fill="none"
+              stroke="transparent"
+              strokeWidth={16}
+              style={{ cursor: reviewMode ? "default" : "pointer" }}
+              onClick={() => !reviewMode && onRemove(p.id)}
+            />
+            {/* Visible line */}
+            <path
+              d={p.d}
+              fill="none"
+              stroke={color}
+              strokeWidth={reviewMode ? 3 : 2.5}
+              strokeDasharray={reviewMode ? undefined : "6 3"}
+              markerEnd={`url(#${arrowId})`}
+              style={{ pointerEvents: "none" }}
+            />
+            {/* Delete circle — hidden in review mode */}
+            {!reviewMode && (
+              <>
+                <circle
+                  cx={p.midX}
+                  cy={p.midY}
+                  r={10}
+                  fill="white"
+                  stroke="#5BA8D4"
+                  strokeWidth={1.5}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => onRemove(p.id)}
+                />
+                <text
+                  x={p.midX}
+                  y={p.midY + 4.5}
+                  textAnchor="middle"
+                  fontSize={12}
+                  fill="#cc5555"
+                  style={{ cursor: "pointer", userSelect: "none", pointerEvents: "none" }}
+                >
+                  ✕
+                </text>
+              </>
+            )}
+            {/* Review mode badge */}
+            {reviewMode && (
+              <>
+                <circle cx={p.midX} cy={p.midY} r={10} fill={color} />
+                <text
+                  x={p.midX}
+                  y={p.midY + 4.5}
+                  textAnchor="middle"
+                  fontSize={12}
+                  fill="white"
+                  style={{ userSelect: "none", pointerEvents: "none" }}
+                >
+                  {isCorrect ? "✓" : "✕"}
+                </text>
+              </>
+            )}
+          </g>
+        );
+      })}
     </svg>
   );
 }
