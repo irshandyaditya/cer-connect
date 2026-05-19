@@ -4,7 +4,7 @@ export function parseDurationToSeconds(str: string): number {
     const m = str.match(/^(\d+)([smhd])$/);
     if (!m) throw new Error(`Invalid duration format: ${str}`);
 
-    const n = parseInt(m[1], 10);
+    const n = parseInt(m[1]!, 10);
 
     switch (m[2]) {
         case 's': return n;
