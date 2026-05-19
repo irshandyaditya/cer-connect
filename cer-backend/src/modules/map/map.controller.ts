@@ -28,6 +28,10 @@ export const createMap = async (req: AuthRequest, res: Response) => {
     }
   }
 
+  if (!req.file) {
+    return R.badRequest(res, "File not found");
+  }
+
   const data = await MapService.createMap(
     value,
     req.user!.id,

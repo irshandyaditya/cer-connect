@@ -127,13 +127,31 @@ export async function createMap(
   token: string,
   payload: CreateMapPayload
 ): Promise<{ status: string; message: string; data: MapItem }> {
+
+  const formData = new FormData();
+
+  formData.append("title", payload.title);
+
+  formData.append("timeoutAt", payload.timeoutAt);
+
+  formData.append("groupId", payload.groupId);
+
+  if (payload.description) {
+    formData.append("description", payload.description);
+  }
+
+  if (payload.document) {
+    formData.append("document", payload.document);
+  }
+
   const res = await fetch(`${BASE_URL}/maps/`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      // "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(payload),
+    // body: JSON.stringify(payload),
+    body: formData,
   });
 
   if (!res.ok) {
