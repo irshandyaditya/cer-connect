@@ -69,3 +69,13 @@ export const getMaps = async (req: AuthRequest, res: Response) => {
 
   return R.ok(res, "Maps fetched", filtered);
 };
+
+export const getMapSubmissions = async (req: AuthRequest, res: Response) => {
+  if (!req.user) return R.unauthorized(res, "User not logged in");
+  if (req.user.role !== "TEACHER") return R.forbidden(res, "Hanya guru yang dapat mengakses data ini");
+ 
+  const { mapId } = req.params;
+  const submissions = await MapService.getSubmissionsByMap(String(mapId));
+ 
+  return R.ok(res, "Submissions fetched", submissions);
+};

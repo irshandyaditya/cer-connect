@@ -91,6 +91,18 @@ export type CreateMapPayload = {
   groupId: string;
 };
 
+export type SubmissionEntry = {
+  id: string;
+  score: number | null;
+  submittedAt: string;
+  user: {
+    id: string;
+    fullName: string;
+    username: string;
+    group: { id: string; name: string } | null;
+  };
+}
+
 // ── Auth ───────────────────────────────────────────────────────────────
 
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
@@ -295,6 +307,22 @@ export async function submitAnswers(
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.message ?? "Gagal submit jawaban.");
+  }
+
+  return res.json();
+}
+
+export async function getMapSubmissions(
+  token: string,
+  mapId: string
+): Promise<{ status: string; message: string; data: SubmissionEntry[] }> {
+  const res = await fetch(`${BASE_URL}/maps/${mapId}/submissions`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message ?? "Gagal memuat data submisi.");
   }
 
   return res.json();

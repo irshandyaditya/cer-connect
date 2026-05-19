@@ -1,30 +1,5 @@
 import prisma from "../../config/prisma";
-import { saveDocument } from "./map.utils";
-
-function shuffleArray<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function shuffleCardsPerColumn(maps: any[]): any[] {
-  return maps.map((map) => {
-    if (!map.cards || map.cards.length === 0) return map;
-
-    const columns = ["CLAIM", "EVIDENCE", "REASONING"] as const;
-    const shuffled: typeof map.cards = [];
-
-    for (const col of columns) {
-      const colCards = map.cards.filter((c: any) => c.column === col);
-      shuffled.push(...shuffleArray(colCards));
-    }
-
-    return { ...map, cards: shuffled, connections: [] };
-  });
-}
+import { saveDocument, shuffleCardsPerColumn } from "./map.utils";
 
 export const getMapById = async (mapId: string, role?: string) => {
   const map = await prisma.map.findUnique({
@@ -122,6 +97,26 @@ export const getMapsByGroup = async (groupId: string, role?: string) => {
 
   if (role === "STUDENT") return shuffleCardsPerColumn(maps);
   return maps;
+};
+
+export const getSubmissionsByMap = async (mapId: string) => {
+  return prisma.submission.findMany({
+    where: { mapId },
+    select: {
+      id: true,
+      score: true,
+      submittedAt: true,
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          username: true,
+          group: { select: { id: true, name: true } },
+        },
+      },
+    },
+    orderBy: { submittedAt: "asc" },
+  });
 };
 
 export const getAllMaps = async () => {

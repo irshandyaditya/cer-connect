@@ -16,6 +16,7 @@ import {
   CardPayloadItem,
   ConnectionPayloadItem,
 } from "@/lib/api";
+import StudentSubmissionsModal from "./student-submissions-modal";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -166,6 +167,7 @@ export default function Board() {
 
   const [showBackConfirm, setShowBackConfirm] = useState(false);
   const [showDocPreview, setShowDocPreview] = useState(false);
+  const [showSubmissions, setShowSubmissions] = useState(false);
   const [docUrl, setDocUrl] = useState<string | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
@@ -420,6 +422,20 @@ export default function Board() {
           </button>
         )}
 
+        {role === "TEACHER" && mapId && (
+          <button
+            onClick={() => setShowSubmissions(true)}
+            className="flex items-center gap-1.5 text-[12.5px] text-[#7A5CAD] hover:bg-[#9B7CC4]/10 px-2.5 py-1.5 rounded-lg transition-colors font-medium"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Hasil Siswa
+          </button>
+        )}
+
         <div className="flex-1" />
 
         {reviewMode && (
@@ -500,6 +516,10 @@ export default function Board() {
 
       {showDocPreview && docUrl && (
         <DocumentPreviewModal url={docUrl} onClose={() => setShowDocPreview(false)} />
+      )}
+
+      {showSubmissions && mapId && (
+        <StudentSubmissionsModal mapId={mapId} onClose={() => setShowSubmissions(false)} />
       )}
 
       {teacherSubmitted && (
