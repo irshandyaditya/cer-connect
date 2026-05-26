@@ -75,6 +75,7 @@ export type ConnectionItem = {
 export type MapDetail = MapItem & {
   cards: CardItem[];
   connections: ConnectionItem[];
+  group: GroupItem;
 };
 
 export type MapsResponse = {

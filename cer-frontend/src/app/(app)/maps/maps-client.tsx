@@ -136,9 +136,19 @@ export default function MapsClient() {
         </div>
       ) : (
         <div className="flex flex-col gap-2.5">
-          {filtered.map((map) => (
-            <MapCard key={map.id} map={map} onClick={() => router.push(`/cer?mapId=${map.id}`)} />
-          ))}
+          {filtered.map((map) => {
+            const groupName = groups.find((g) => g.id === map.groupId)?.name ?? "\u2014";
+            return (
+              <MapCard
+                key={map.id}
+                map={map}
+                isTeacher={role === "TEACHER"}
+                groupName={groupName}
+                onOpenCer={() => router.push(`/cer?mapId=${map.id}`)}
+                onOpenGrades={() => router.push(`/grades/${map.id}`)}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -154,23 +164,25 @@ export default function MapsClient() {
           }}
         />
       )}
+
     </div>
   );
 }
 
-function MapCard({ map, onClick }: { map: MapItem; onClick: () => void }) {
-  const [hovered, setHovered] = useState(false);
+function MapCard({
+  map, isTeacher, groupName, onOpenCer, onOpenGrades,
+}: {
+  map: MapItem;
+  isTeacher: boolean;
+  groupName: string;
+  onOpenCer: () => void;
+  onOpenGrades: () => void;
+}) {
   const timeout = formatTimeout(map.timeoutAt);
 
   return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={`w-full text-left bg-white rounded-xl border flex items-center gap-4 px-5 py-4 outline-none
-        focus-visible:ring-2 focus-visible:ring-[#4A9E8E]/40 transition-all duration-150
-        ${hovered ? "border-gray-300 -translate-y-px shadow-md" : "border-gray-200 shadow-sm"}`}
-    >
+    <div className="w-full bg-white rounded-xl border border-gray-200 shadow-sm hover:border-gray-300 hover:-translate-y-px hover:shadow-md transition-all duration-150 px-5 py-4 flex items-start gap-4">
+      {/* \u2014 Info kiri \u2014 */}
       <div className="flex-1 min-w-0">
         <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#4A9E8E] bg-[#4A9E8E]/10 px-2.5 py-0.5 rounded-full mb-2">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -182,9 +194,7 @@ function MapCard({ map, onClick }: { map: MapItem; onClick: () => void }) {
           {map.createdBy.fullName}
         </span>
 
-        <p className={`text-[14px] font-medium truncate mb-1 transition-colors ${hovered ? "text-[#4A9E8E]" : "text-gray-900"}`}>
-          {map.title}
-        </p>
+        <p className="text-[14px] font-medium truncate mb-1 text-gray-900">{map.title}</p>
 
         {map.description && (
           <p className="text-[12px] text-gray-500 leading-relaxed line-clamp-2 mb-2">
@@ -202,16 +212,49 @@ function MapCard({ map, onClick }: { map: MapItem; onClick: () => void }) {
         </span>
       </div>
 
+      {/* \u2014 Aksi kanan \u2014 */}
       <div className="flex flex-col items-end justify-between gap-3 self-stretch flex-shrink-0">
         <span className="text-[11px] text-gray-400 whitespace-nowrap">{formatDate(map.createdAt)}</span>
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-150
-          ${hovered ? "bg-[#4A9E8E] border-[#4A9E8E] text-white" : "bg-gray-100 border-gray-200 text-gray-400"}`}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-          </svg>
-        </div>
+
+        {isTeacher ? (
+          <div className="flex items-center gap-2">
+            {/* Tombol Nilai */}
+            <button
+              onClick={onOpenGrades}
+              title="Lihat nilai siswa"
+              className="flex items-center gap-1.5 h-[30px] px-3 rounded-lg border border-gray-200 bg-white text-[11.5px] font-medium text-gray-600 hover:border-[#4A9E8E] hover:text-[#4A9E8E] hover:bg-[#4A9E8E]/5 transition-colors"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+              Nilai
+            </button>
+
+            {/* Tombol Buka CER */}
+            <button
+              onClick={onOpenCer}
+              title="Buka map CER"
+              className="flex items-center gap-1.5 h-[30px] px-3 rounded-lg bg-[#1C1C2E] text-white text-[11.5px] font-medium hover:bg-[#2d2d44] transition-colors"
+            >
+              Buka Map
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={onOpenCer}
+            className="w-8 h-8 rounded-full flex items-center justify-center border bg-gray-100 border-gray-200 text-gray-400 hover:bg-[#4A9E8E] hover:border-[#4A9E8E] hover:text-white transition-all duration-150"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </button>
+        )}
       </div>
-    </button>
+    </div>
   );
 }
 
