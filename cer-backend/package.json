@@ -8,13 +8,13 @@
     "start": "bun run src/server.ts",
 
     "prisma:gen": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
+    "migrate": "prisma migrate deploy && prisma generate",
+    "migrate:dev": "prisma migrate dev",
 
     "seed": "bun run prisma/seed.ts",
     "prisma:seed": "bun run prisma/seed.ts",
 
-    "build": "tsc"
+    "build": "bun install && bun run migrate && tsc && bun run seed"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
