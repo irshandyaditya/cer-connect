@@ -15,6 +15,15 @@ async function main() {
     create: { name: "STUDENT" },
   });
 
+  // group
+  const groupTI2A = await prisma.group.upsert({
+    where: { name: "TI-2A" },
+    update: {},
+    create: {
+      name: "TI-2A",
+    },
+  });
+
   // teacher user
   const teacherPassword = await bcrypt.hash("123456", 12);
 
@@ -40,6 +49,7 @@ async function main() {
       password: studentPassword,
       fullName: "Student One",
       roleId: studentRole.id,
+      groupId: groupTI2A.id,
     },
   });
 
