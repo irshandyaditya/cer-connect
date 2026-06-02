@@ -263,31 +263,31 @@ type AddMapForm = {
   description: string;
   document: File | null;
   timeoutAt: string;
-  groupId: string;
+  groupIds: string[];
 };
 
 function AddMapModal({
   groups, defaultGroupId, token, onClose, onCreated,
 }: {
-  groups: GroupItem[], defaultGroupId: string; token: string; onClose: () => void; onCreated: () => void;
+  groups: GroupItem[], defaultGroupId?: string; token: string; onClose: () => void; onCreated: () => void;
 }) {
   const [form, setForm] = useState<AddMapForm>({
     title: "",
     description: "",
     document: null,
     timeoutAt: "",
-    groupId: defaultGroupId,
+    groupIds: defaultGroupId ? [defaultGroupId] : [],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
 
-  function update(field: keyof AddMapForm, value: string) {
+  function update(field: keyof Pick<AddMapForm, "title" | "description" | "timeoutAt">, value: string) {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
   async function handleSubmit() {
-    if (!form.title.trim() || !form.timeoutAt || !form.groupId.trim()) {
-      setError("Judul, tenggat waktu, dan group wajib diisi.");
+    if (!form.title.trim() || !form.timeoutAt || form.groupIds.length === 0) {
+      setError("Judul, tenggat waktu, dan minimal satu group wajib diisi.");
       return;
     }
 
@@ -300,7 +300,7 @@ function AddMapModal({
         description: form.description.trim() || undefined,
         document: form.document,
         timeoutAt: new Date(form.timeoutAt).toISOString(),
-        groupId: form.groupId,
+        groupIds: form.groupIds,
       };
 
       await createMap(token, payload);
@@ -367,22 +367,43 @@ function AddMapModal({
           
           <div>
             <label className="block text-[11px] font-medium uppercase tracking-wide text-gray-500 mb-1.5">
-              Group *
+              Group * <span className="text-gray-400 font-normal normal-case">(bisa pilih lebih dari satu)</span>
             </label>
 
-            <select
-              value={form.groupId}
-              onChange={(e) => update("groupId", e.target.value)}
-              className="w-full h-[40px] px-3 text-[13.5px] border border-gray-200 rounded-lg text-gray-800 outline-none focus:border-[#4A9E8E] focus:ring-2 focus:ring-[#4A9E8E]/15 transition"
-            >
-              <option value="">Pilih Group</option>
+            <div className="border border-gray-200 rounded-lg overflow-hidden max-h-[160px] overflow-y-auto divide-y divide-gray-100">
+              {groups.map((group) => {
+                const checked = form.groupIds.includes(group.id);
+                return (
+                  <label
+                    key={group.id}
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${checked ? "bg-[#4A9E8E]/5" : "hover:bg-gray-50"}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => {
+                        setForm((f) => ({
+                          ...f,
+                          groupIds: e.target.checked
+                            ? [...f.groupIds, group.id]
+                            : f.groupIds.filter((id) => id !== group.id),
+                        }));
+                      }}
+                      className="w-3.5 h-3.5 accent-[#4A9E8E]"
+                    />
+                    <span className={`text-[13px] ${checked ? "text-[#4A9E8E] font-medium" : "text-gray-700"}`}>
+                      {group.name}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
 
-              {groups.map((group) => (
-                <option key={group.id} value={group.id}>
-                  {group.name}
-                </option>
-              ))}
-            </select>
+            {form.groupIds.length > 0 && (
+              <p className="mt-1.5 text-[11px] text-gray-400">
+                {form.groupIds.length} group dipilih
+              </p>
+            )}
           </div>
           <ModalField label="Tenggat Waktu *" value={form.timeoutAt} onChange={(v) => update("timeoutAt", v)} type="datetime-local" />
         </div>

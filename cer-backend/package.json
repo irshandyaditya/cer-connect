@@ -14,7 +14,7 @@
     "seed": "bun run prisma/seed.ts",
     "prisma:seed": "bun run prisma/seed.ts",
 
-    "build": "bun install && bun run migrate && tsc && bun run seed"
+    "build": "bun install && bun run migrate && tsc"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

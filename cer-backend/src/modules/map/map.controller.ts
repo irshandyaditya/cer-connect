@@ -21,6 +21,15 @@ export const getMap = async (req: AuthRequest, res: Response) => {
 };
 
 export const createMap = async (req: AuthRequest, res: Response) => {
+  // groupIds may come as JSON string from multipart form
+  if (req.body.groupIds && typeof req.body.groupIds === "string") {
+    try {
+      req.body.groupIds = JSON.parse(req.body.groupIds);
+    } catch {
+      // leave as-is; Joi will validate
+    }
+  }
+
   const { error, value } = createMapSchema.validate(req.body);
 
   if (error) {
@@ -78,4 +87,37 @@ export const getMapSubmissions = async (req: AuthRequest, res: Response) => {
   const submissions = await MapService.getSubmissionsByMap(String(mapId));
  
   return R.ok(res, "Submissions fetched", submissions);
+};
+
+export const addGroupToMap = async (req: AuthRequest, res: Response) => {
+  if (!req.user) return R.unauthorized(res, "User not logged in");
+  if (req.user.role !== "TEACHER") return R.forbidden(res, "Hanya guru yang dapat mengakses data ini");
+
+  const { mapId } = req.params;
+  const { groupId } = req.body;
+
+  if (!groupId) return R.badRequest(res, "groupId is required");
+
+  try {
+    const result = await MapService.addGroupToMap(String(mapId), String(groupId));
+    return R.created(res, "Group added to map", result);
+  } catch (err: any) {
+    if (err.code === "P2002") return R.badRequest(res, "Group sudah terdaftar di map ini");
+    throw err;
+  }
+};
+
+export const removeGroupFromMap = async (req: AuthRequest, res: Response) => {
+  if (!req.user) return R.unauthorized(res, "User not logged in");
+  if (req.user.role !== "TEACHER") return R.forbidden(res, "Hanya guru yang dapat mengakses data ini");
+
+  const { mapId, groupId } = req.params;
+
+  try {
+    await MapService.removeGroupFromMap(String(mapId), String(groupId));
+    return R.ok(res, "Group removed from map", null);
+  } catch (err: any) {
+    if (err.code === "P2025") return R.notFound(res, "Group tidak ditemukan di map ini");
+    throw err;
+  }
 };

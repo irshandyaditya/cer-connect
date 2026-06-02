@@ -46,7 +46,7 @@ export const REFRESH_TOKEN_EXPIRES_IN = getEnv('REFRESH_TOKEN_EXPIRES_IN', '7d')
 
 export const TIMEOUT = parseInt(getEnv('TIMEOUT', '5000'), 10);
 
-export const MAX_FILE_SIZE = parseInt(getEnv('MAX_FILE_SIZE', '1048576'), 10);
+export const MAX_FILE_SIZE = parseInt(getEnv('MAX_FILE_SIZE', '5242880'), 10);
 export const MAX_FILE_COUNT = parseInt(getEnv('MAX_FILE_COUNT', '10'), 10);
 export const TEMP_PATH = getEnv('TEMP_PATH', 'storage/temp');
 export const LOG_PATH = getEnv('LOG_PATH', 'storage/logs');
@@ -56,6 +56,10 @@ export const SELFIE_PATH = getEnv('SELFIE_PATH', 'storage/uploads/selfies');
 export const ALLOWED_ORIGINS = getEnv('ALLOWED_ORIGINS').split(',');
 export const ALLOWED_HEADERS = getEnv('ALLOWED_HEADERS', 'Content-Type,Authorization,Accept');
 export const ALLOWED_METHODS = getEnv('ALLOWED_METHODS', 'HEAD,GET,PUT,PATCH,POST,DELETE');
+
+export const SUPABASE_URL = getEnv('SUPABASE_URL', 'https://x.supabase');
+export const SUPABASE_SERVICE_KEY = getEnv('SUPABASE_SERVICE_KEY', 'sasadsadd');
+export const SUPABASE_STORAGE_BUCKET = getEnv('SUPABASE_STORAGE_BUCKET', 'documents');
 
 export const RATE_LIMIT_WINDOW_MS = parseInt(getEnv('RATE_LIMIT_WINDOW_MS', '60000'), 10);
 export const RATE_LIMIT_MAX = parseInt(getEnv('RATE_LIMIT_MAX', '30'), 10);

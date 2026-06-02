@@ -15,6 +15,9 @@ export default function AppHeader() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  // Disable "Daftar Map" link when inside /cer
+  const isInsideCer = pathname.startsWith("/cer");
+
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -44,6 +47,20 @@ export default function AppHeader() {
         <nav className="flex items-center gap-1">
           {NAV_LINKS.map((link) => {
             const active = pathname.startsWith(link.href);
+            const disabled = isInsideCer && link.href === "/maps";
+
+            if (disabled) {
+              return (
+                <span
+                  key={link.href}
+                  title="Kembali ke halaman sebelumnya untuk mengakses Daftar Map"
+                  className="text-[13px] px-2.5 py-1 rounded-md text-gray-300 cursor-not-allowed select-none"
+                >
+                  {link.label}
+                </span>
+              );
+            }
+
             return (
               <Link
                 key={link.href}
