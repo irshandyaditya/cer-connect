@@ -19,7 +19,6 @@ export default function GradesClient() {
 
   const [submissions, setSubmissions] = useState<SubmissionEntry[]>([]);
   const [mapTitle, setMapTitle]       = useState<string>("");
-  const [groupName, setGroupName]     = useState<string>("");
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState<string | null>(null);
 
@@ -36,9 +35,6 @@ export default function GradesClient() {
     ])
       .then(([mapRes, subRes]) => {
         setMapTitle(mapRes.data.title);
-        // groupName dari submission pertama, atau fallback groupId
-        const firstGroup = subRes.data[0]?.user?.group?.name;
-        setGroupName(firstGroup ?? mapRes.data.group?.name);
         setSubmissions(subRes.data);
       })
       .catch((err) => setError(err.message ?? "Gagal memuat data."))
@@ -55,7 +51,7 @@ export default function GradesClient() {
   const { color: avgColor, bg: avgBg } = scoreBg(avgScore);
 
   return (
-    <div className="max-w-[760px] mx-auto px-6 py-9">
+    <div className="max-w-[860px] mx-auto px-6 py-9">
 
       {/* ── Back + Header ── */}
       <div className="mb-7">
@@ -81,16 +77,6 @@ export default function GradesClient() {
                 {mapTitle}
               </h1>
             )}
-            <div className="flex items-center gap-1.5">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-              <span className="text-[12.5px] text-gray-400">
-                {loading ? "Memuat..." : groupName}
-              </span>
-            </div>
           </div>
 
           {/* Stat rata-rata */}
@@ -129,7 +115,8 @@ export default function GradesClient() {
             <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-gray-50 last:border-0">
               <div className="w-5 h-3 bg-gray-100 rounded animate-pulse" />
               <div className="flex-1 h-4 bg-gray-100 rounded animate-pulse" />
-              <div className="w-24 h-3 bg-gray-100 rounded animate-pulse" />
+              <div className="w-20 h-3 bg-gray-100 rounded animate-pulse" />
+              <div className="w-16 h-3 bg-gray-100 rounded animate-pulse" />
               <div className="w-10 h-5 bg-gray-100 rounded-full animate-pulse" />
             </div>
           ))}
@@ -169,6 +156,9 @@ export default function GradesClient() {
                   <th className="px-5 py-3.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
                     NIM
                   </th>
+                  <th className="px-5 py-3.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                    Kelas
+                  </th>
                   <th className="px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400 text-center">
                     Nilai
                   </th>
@@ -192,6 +182,11 @@ export default function GradesClient() {
                           {sub.user.username}
                         </p>
                       </td>
+                      <td className="px-5 py-4">
+                        <span className="inline-block text-[12px] font-medium px-2 py-0.5 rounded-md bg-gray-100 text-gray-600">
+                          {sub.user.group?.name ?? "—"}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 text-center">
                         {sub.score !== null ? (
                           <span
@@ -212,7 +207,7 @@ export default function GradesClient() {
               {/* ── Footer rata-rata ── */}
               <tfoot>
                 <tr className="bg-gray-50 border-t border-gray-200">
-                  <td colSpan={3} className="px-5 py-4 text-[12.5px] font-semibold text-gray-600 text-right">
+                  <td colSpan={4} className="px-5 py-4 text-[12.5px] font-semibold text-gray-600 text-right">
                     Rata-rata Nilai
                   </td>
                   <td className="px-6 py-4 text-center">
