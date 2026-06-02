@@ -475,7 +475,7 @@ export default function Board() {
         </div>
       )}
 
-      <div className="flex gap-4 p-6 items-start min-h-screen bg-[#F2F4F8]">
+      <div className="flex gap-16 p-6 items-start min-h-screen bg-[#F2F4F8]">
         {COL_DEFS.map((colDef) => {
           const colCards = cards.filter((c) => c.column === colDef.id);
           return (

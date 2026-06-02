@@ -71,13 +71,13 @@ export default function ConnectionsLayer({ connections, onRemove, reviewMode = f
     >
       <defs>
         <marker id="cer-arrow" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
-          <polygon points="0 0, 8 3.5, 0 7" fill="#5BA8D4" />
+          {/* <polygon points="0 0, 8 3.5, 0 7" fill="#5BA8D4" /> */}
         </marker>
         <marker id="cer-arrow-correct" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
-          <polygon points="0 0, 8 3.5, 0 7" fill="#22c55e" />
+          {/* <polygon points="0 0, 8 3.5, 0 7" fill="#22c55e" /> */}
         </marker>
         <marker id="cer-arrow-wrong" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
-          <polygon points="0 0, 8 3.5, 0 7" fill="#ef4444" />
+          {/* <polygon points="0 0, 8 3.5, 0 7" fill="#ef4444" /> */}
         </marker>
       </defs>
 
