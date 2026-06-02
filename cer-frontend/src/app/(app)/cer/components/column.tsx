@@ -42,6 +42,7 @@ type Props = {
   onAddCard: () => void;
   reviewMode?: boolean;
   correctConnIds?: Set<string>;
+  isTeacher?: boolean;
 };
 
 function Column({
@@ -56,6 +57,7 @@ function Column({
   onAddCard,
   reviewMode = false,
   correctConnIds = new Set(),
+  isTeacher = false,
 }: Props) {
   const styles = COL_STYLES[colDef.id];
 
@@ -120,8 +122,8 @@ function Column({
         })}
       </div>
 
-      {/* Add button — hidden in review mode */}
-      {!reviewMode && (
+      {/* Add button — only for TEACHER, hidden in review mode */}
+      {!reviewMode && isTeacher && (
         <button
           onClick={onAddCard}
           className={`mx-3 mt-3 py-2.5 rounded-xl border-2 border-dashed text-sm font-semibold transition-colors ${styles.addBtn}`}

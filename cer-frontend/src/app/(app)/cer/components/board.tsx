@@ -492,6 +492,7 @@ export default function Board() {
               onAddCard={reviewMode ? () => {} : () => setAddModalCol(colDef.id)}
               reviewMode={reviewMode}
               correctConnIds={correctConnIds}
+              isTeacher={role === "TEACHER"}
             />
           );
         })}
