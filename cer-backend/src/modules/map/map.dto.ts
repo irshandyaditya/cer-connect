@@ -5,5 +5,10 @@ export const createMapSchema = Joi.object({
   description: Joi.string().allow("", null),
   document: Joi.any().optional(),
   timeoutAt: Joi.date().required(),
-  groupId: Joi.string().required(),
-});
+  // Accept either a single groupId OR an array groupIds
+  groupId: Joi.string().optional(),
+  groupIds: Joi.alternatives().try(
+    Joi.array().items(Joi.string()).min(1),
+    Joi.string()
+  ).optional(),
+}).or("groupId", "groupIds");

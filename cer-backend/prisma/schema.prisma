@@ -36,8 +36,8 @@ model Group {
   id   String @id @default(cuid())
   name String @unique
 
-  users User[]
-  maps  Map[]
+  users    User[]
+  mapGroups MapGroup[]
 }
 
 model Map {
@@ -48,8 +48,8 @@ model Map {
 
   timeoutAt DateTime
 
-  group   Group  @relation(fields: [groupId], references: [id])
-  groupId String
+  // Many-to-many with Group via MapGroup join table
+  mapGroups MapGroup[]
 
   cards       Card[]
   connections Connection[]
@@ -60,6 +60,16 @@ model Map {
   submissions Submission[]
 
   createdAt DateTime @default(now())
+}
+
+model MapGroup {
+  id      String @id @default(cuid())
+  map     Map    @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  mapId   String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId String
+
+  @@unique([mapId, groupId])
 }
 
 model Card {

@@ -1,26 +1,43 @@
-import fs from "fs";
-import path from "path";
 import { randomUUID } from "crypto";
+import path from "path";
 
-export function saveDocument(file: Express.Multer.File) {
-  const uploadDir = path.join(process.cwd(), "storage", "uploads");
+export async function uploadDocument(file: Express.Multer.File) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+  const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "documents";
 
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error(
+      "SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in environment variables"
+    );
   }
 
   const ext = path.extname(file.originalname);
-
   const filename = `${Date.now()}-${randomUUID()}${ext}`;
 
-  const filepath = path.join(uploadDir, filename);
+  const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucket}/${filename}`;
 
-  fs.writeFileSync(filepath, file.buffer);
+  const response = await fetch(uploadUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${supabaseKey}`,
+      apikey: supabaseKey,                    // <-- ini yang kurang
+      "Content-Type": file.mimetype,
+      "x-upsert": "false",
+    },
+    body: file.buffer,
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Supabase Storage upload failed: ${err}`);
+  }
+
+  const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${filename}`;
 
   return {
     filename,
-    filepath,
-    url: `/storage/uploads/${filename}`,
+    url: publicUrl,
   };
 }
 

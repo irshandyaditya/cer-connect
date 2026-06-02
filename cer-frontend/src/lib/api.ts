@@ -89,7 +89,10 @@ export type CreateMapPayload = {
   description?: string;
   document?: File | null;
   timeoutAt: string;
-  groupId: string;
+  /** Single group (legacy) */
+  groupId?: string;
+  /** Multiple groups (new) */
+  groupIds?: string[];
 };
 
 export type SubmissionEntry = {
@@ -185,7 +188,12 @@ export async function createMap(
 
   formData.append("timeoutAt", payload.timeoutAt);
 
-  formData.append("groupId", payload.groupId);
+  // Support single groupId or multiple groupIds
+  if (payload.groupIds && payload.groupIds.length > 0) {
+    formData.append("groupIds", JSON.stringify(payload.groupIds));
+  } else if (payload.groupId) {
+    formData.append("groupId", payload.groupId);
+  }
 
   if (payload.description) {
     formData.append("description", payload.description);

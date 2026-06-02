@@ -1,35 +1,50 @@
 import prisma from "../../config/prisma";
-import { saveDocument, shuffleCardsPerColumn } from "./map.utils";
+import { uploadDocument, shuffleCardsPerColumn } from "./map.utils";
+
+const mapInclude = {
+  mapGroups: {
+    include: { group: true },
+  },
+  createdBy: {
+    include: { role: true, group: true },
+  },
+  cards: true,
+  connections: {
+    include: { from: true, to: true },
+  },
+  submissions: {
+    include: {
+      user: { include: { role: true, group: true } },
+      answers: true,
+    },
+  },
+} as const;
+
+/** Normalise map: expose groups[] array alongside legacy mapGroups */
+function normaliseMap(map: any) {
+  if (!map) return null;
+  return {
+    ...map,
+    groups: map.mapGroups?.map((mg: any) => mg.group) ?? [],
+  };
+}
 
 export const getMapById = async (mapId: string, role?: string) => {
   const map = await prisma.map.findUnique({
     where: { id: mapId },
-    include: {
-      group: true,
-      createdBy: {
-        include: { role: true, group: true },
-      },
-      cards: true,
-      connections: {
-        include: { from: true, to: true },
-      },
-      submissions: {
-        include: {
-          user: { include: { role: true, group: true } },
-          answers: true,
-        },
-      },
-    },
+    include: mapInclude,
   });
 
   if (!map) return null;
 
+  const normalised = normaliseMap(map);
+
   if (role === "STUDENT") {
-    const [shuffled] = shuffleCardsPerColumn([map]);
+    const [shuffled] = shuffleCardsPerColumn([normalised]);
     return shuffled;
   }
 
-  return map;
+  return normalised;
 };
 
 export const createMap = async (
@@ -37,66 +52,55 @@ export const createMap = async (
   teacherId: string,
   file?: Express.Multer.File
 ) => {
-  const {
-    document,
-    ...payload
-  } = data;
+  const { document, groupIds, groupId, ...payload } = data;
+
+  // Support both groupId (single, legacy) and groupIds (array, new)
+  const resolvedGroupIds: string[] = groupIds
+    ? Array.isArray(groupIds)
+      ? groupIds
+      : [groupIds]
+    : groupId
+    ? [groupId]
+    : [];
+
+  if (resolvedGroupIds.length === 0) {
+    throw new Error("At least one group must be specified");
+  }
 
   let documentUrl: string | undefined;
 
   if (file) {
-    const uploaded = saveDocument(file);
+    const uploaded = await uploadDocument(file);
     documentUrl = uploaded.url;
   }
 
-  return prisma.map.create({
+  const map = await prisma.map.create({
     data: {
       ...payload,
       teacherId,
       documentUrl,
+      mapGroups: {
+        create: resolvedGroupIds.map((gId: string) => ({ groupId: gId })),
+      },
     },
+    include: mapInclude,
   });
+
+  return normaliseMap(map);
 };
 
 export const getMapsByGroup = async (groupId: string, role?: string) => {
   const maps = await prisma.map.findMany({
-    where: { groupId },
-    include: {
-      group: true,
-
-      createdBy: {
-        include: {
-          role: true,
-          group: true,
-        },
-      },
-
-      cards: true,
-
-      connections: {
-        include: {
-          from: true,
-          to: true,
-        },
-      },
-
-      submissions: {
-        include: {
-          user: {
-            include: {
-              role: true,
-              group: true,
-            },
-          },
-
-          answers: true,
-        },
-      },
+    where: {
+      mapGroups: { some: { groupId } },
     },
+    include: mapInclude,
   });
 
-  if (role === "STUDENT") return shuffleCardsPerColumn(maps);
-  return maps;
+  const normalised = maps.map(normaliseMap);
+
+  if (role === "STUDENT") return shuffleCardsPerColumn(normalised);
+  return normalised;
 };
 
 export const getSubmissionsByMap = async (mapId: string) => {
@@ -120,38 +124,18 @@ export const getSubmissionsByMap = async (mapId: string) => {
 };
 
 export const getAllMaps = async () => {
-  return prisma.map.findMany({
-    include: {
-      group: true,
+  const maps = await prisma.map.findMany({ include: mapInclude });
+  return maps.map(normaliseMap);
+};
 
-      createdBy: {
-        include: {
-          role: true,
-          group: true,
-        },
-      },
+export const addGroupToMap = async (mapId: string, groupId: string) => {
+  return prisma.mapGroup.create({
+    data: { mapId, groupId },
+  });
+};
 
-      cards: true,
-
-      connections: {
-        include: {
-          from: true,
-          to: true,
-        },
-      },
-
-      submissions: {
-        include: {
-          user: {
-            include: {
-              role: true,
-              group: true,
-            },
-          },
-
-          answers: true,
-        },
-      },
-    },
+export const removeGroupFromMap = async (mapId: string, groupId: string) => {
+  return prisma.mapGroup.delete({
+    where: { mapId_groupId: { mapId, groupId } },
   });
 };
