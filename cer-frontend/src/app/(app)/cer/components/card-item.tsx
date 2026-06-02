@@ -111,7 +111,7 @@ function CardItem({
       )}
 
       {/* Connection badges — hidden in review mode (arrows handle the visual) */}
-      {!reviewMode && myConnections.length > 0 && (
+      {/* {!reviewMode && myConnections.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-2.5">
           {myConnections.map((conn) => {
             const isOutgoing = conn.fromId === card.id;
@@ -143,7 +143,7 @@ function CardItem({
             );
           })}
         </div>
-      )}
+      )} */}
 
       {/* Action bar — hidden in review mode */}
       {!reviewMode && (
