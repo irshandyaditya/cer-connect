@@ -353,3 +353,15 @@ export function decodeJwt(token: string): JwtPayload | null {
     return null;
   }
 }
+
+export async function getMySubmissionResult(
+  token: string,
+  mapId: string
+): Promise<{ score: number; correctAnswers: { fromId: string; toId: string }[]; answers: { fromId: string; toId: string }[] }> {
+  const res = await fetch(`${BASE_URL}/submissions/${mapId}/my-result`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Gagal mengambil hasil submission.");
+  const json = await res.json();
+  return json.data;
+}

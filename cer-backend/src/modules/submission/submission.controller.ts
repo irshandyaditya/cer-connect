@@ -23,3 +23,10 @@ export const submit = async (req: AuthRequest, res: Response) => {
 
   return R.ok(res, "Submitted", { submissionId: submission.id, score, correctAnswers });
 };
+export const myResult = async (req: AuthRequest, res: Response) => {
+  const uid = (req as any).user!.id;
+  const { mapId } = req.params;
+  const result = await Service.getMyResult(uid, String(mapId));
+  if (!result) return R.notFound(res, "Belum ada submission untuk map ini.");
+  return R.ok(res, "OK", result);
+};

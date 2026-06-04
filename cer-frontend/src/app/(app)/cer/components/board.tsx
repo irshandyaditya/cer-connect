@@ -13,6 +13,7 @@ import {
   createConnections,
   submitAnswers,
   getMapDetail,
+  getMySubmissionResult,
   CardPayloadItem,
   ConnectionPayloadItem,
 } from "@/lib/api";
@@ -293,7 +294,7 @@ export default function Board() {
 
     setLoadingMap(true);
     getMapDetail(token, mapId)
-      .then((res) => {
+      .then(async (res) => {
         const map = res.data as any;
 
         if (map.documentUrl) setDocUrl(map.documentUrl);
@@ -319,31 +320,31 @@ export default function Board() {
           );
         }
 
-        // Kalau student sudah pernah submit → langsung review mode dengan hasil terakhir
+        // Kalau student sudah pernah submit → fetch hasil dari backend (dengan correctAnswers dari guru)
         if (role === "STUDENT" && map.submissions && map.submissions.length > 0) {
-          const submission = map.submissions[0];
-          const studentAnswers: ConnectionType[] = (submission.answers ?? []).map((a: any, i: number) => ({
-            id: `ans_${i}`,
-            fromId: a.fromId,
-            toId: a.toId,
-          }));
+          try {
+            const result = await getMySubmissionResult(token!, mapId!);
 
-          const teacherPairs: { fromId: string; toId: string }[] = (map.connections ?? []).map((c: any) => ({
-            fromId: c.fromId,
-            toId: c.toId,
-          }));
+            const studentConns: ConnectionType[] = result.answers.map((a, i) => ({
+              id: `ans_${i}`,
+              fromId: a.fromId,
+              toId: a.toId,
+            }));
 
-          const correctSet = new Set<string>();
-          studentAnswers.forEach((ans) => {
-            const isCorrect = teacherPairs.some(
-              (tp) => tp.fromId === ans.fromId && tp.toId === ans.toId
-            );
-            if (isCorrect) correctSet.add(ans.id);
-          });
+            const correctSet = new Set<string>();
+            studentConns.forEach((conn) => {
+              const isCorrect = result.correctAnswers.some(
+                (ca) => ca.fromId === conn.fromId && ca.toId === conn.toId
+              );
+              if (isCorrect) correctSet.add(conn.id);
+            });
 
-          setConnections(studentAnswers);
-          setCorrectConnIds(correctSet);
-          setReviewMode(true);
+            setConnections(studentConns);
+            setCorrectConnIds(correctSet);
+            setReviewMode(true);
+          } catch {
+            // Jika gagal fetch hasil, biarkan student mengerjakan ulang (tidak seharusnya terjadi)
+          }
         }
       })
       .catch(() => {})
@@ -470,11 +471,14 @@ export default function Board() {
 
     setSubmitting(true);
     try {
+      // Student cards pakai server ID langsung (tidak ada local→server mapping seperti teacher)
+      // karena student tidak buat kartu baru, kartu sudah ada di DB
       const answers: ConnectionPayloadItem[] = connections.map((c) => ({ fromId: c.fromId, toId: c.toId }));
       const res = await submitAnswers(token, { mapId, answers });
       const { score, correctAnswers } = res.data;
       const total = connections.length;
       const correct = correctAnswers.length;
+      // Simpan correctPairs dalam bentuk server ID (sudah benar dari backend)
       setCorrectPairs(correctAnswers);
       setStudentResult({ score, correct, total });
     } catch (err: unknown) {
