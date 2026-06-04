@@ -11,14 +11,6 @@ function formatDate(iso: string) {
   });
 }
 
-function formatTimeout(iso: string) {
-  const d = new Date(iso);
-  const expired = d < new Date();
-  return {
-    label: d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }),
-    expired,
-  };
-}
 
 export default function MapsClient() {
   const router              = useRouter();
@@ -178,8 +170,6 @@ function MapCard({
   onOpenCer: () => void;
   onOpenGrades: () => void;
 }) {
-  const timeout = formatTimeout(map.timeoutAt);
-
   return (
     <div className="w-full bg-white rounded-xl border border-gray-200 shadow-sm hover:border-gray-300 hover:-translate-y-px hover:shadow-md transition-all duration-150 px-5 py-4 flex items-start gap-4">
       {/* \u2014 Info kiri \u2014 */}
@@ -202,15 +192,7 @@ function MapCard({
           </p>
         )}
 
-        <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${
-          timeout.expired ? "bg-red-50 text-red-500" : "bg-amber-50 text-amber-600"
-        }`}>
-          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-          {timeout.expired ? "Berakhir" : "Tenggat"}: {timeout.label}
-        </span>
-      </div>
+        </div>
 
       {/* \u2014 Aksi kanan \u2014 */}
       <div className="flex flex-col items-end justify-between gap-3 self-stretch flex-shrink-0">

@@ -30,10 +30,11 @@ export default function ConnectionsLayer({ connections, onRemove, reviewMode = f
       const fr = fromEl.getBoundingClientRect();
       const tr = toEl.getBoundingClientRect();
 
-      const x1 = fr.right + window.scrollX;
-      const y1 = fr.top + fr.height / 2 + window.scrollY;
-      const x2 = tr.left + window.scrollX;
-      const y2 = tr.top + tr.height / 2 + window.scrollY;
+      // Use viewport-relative coords since SVG is fixed
+      const x1 = fr.right;
+      const y1 = fr.top + fr.height / 2;
+      const x2 = tr.left;
+      const y2 = tr.top + tr.height / 2;
 
       const dx = (x2 - x1) * 0.45;
       const d = `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
@@ -49,6 +50,7 @@ export default function ConnectionsLayer({ connections, onRemove, reviewMode = f
     computePaths();
     const ro = new ResizeObserver(computePaths);
     ro.observe(document.body);
+    // Listen to all scroll events (window + any scrollable container)
     window.addEventListener("scroll", computePaths, true);
     return () => {
       ro.disconnect();
@@ -61,24 +63,18 @@ export default function ConnectionsLayer({ connections, onRemove, reviewMode = f
   return (
     <svg
       style={{
-        position: "absolute",
+        position: "fixed",
         inset: 0,
-        width: "100%",
-        height: "100%",
+        width: "100vw",
+        height: "100vh",
         pointerEvents: "none",
         zIndex: 10,
       }}
     >
       <defs>
-        <marker id="cer-arrow" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
-          {/* <polygon points="0 0, 8 3.5, 0 7" fill="#5BA8D4" /> */}
-        </marker>
-        <marker id="cer-arrow-correct" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
-          {/* <polygon points="0 0, 8 3.5, 0 7" fill="#22c55e" /> */}
-        </marker>
-        <marker id="cer-arrow-wrong" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
-          {/* <polygon points="0 0, 8 3.5, 0 7" fill="#ef4444" /> */}
-        </marker>
+        <marker id="cer-arrow" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto" />
+        <marker id="cer-arrow-correct" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto" />
+        <marker id="cer-arrow-wrong" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto" />
       </defs>
 
       {paths.map((p) => {

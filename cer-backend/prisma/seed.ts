@@ -112,11 +112,25 @@ async function main() {
     create: {
       username: "teacher1",
       password: teacherPassword,
-      fullName: "Ridwan Rismanto",
+      fullName: "RIDWAN RISMANTO",
       roleId: teacherRole.id,
     },
   });
   console.log("  ✅ Teacher: teacher1 / 123456");
+
+  // ── Demo student account ───────────────────────────────────────────
+  const student1Password = await bcrypt.hash("123456", 12);
+  await prisma.user.upsert({
+    where: { username: "student1" },
+    update: {},
+    create: {
+      username: "student1",
+      password: student1Password,
+      fullName: "Demo Student",
+      roleId: studentRole.id,
+    },
+  });
+  console.log("  ✅ Demo Student: student1 / 123456");
 
   // ── Students ───────────────────────────────────────────────────────
   let count = 0;
@@ -144,8 +158,9 @@ async function main() {
   console.log("🎉 Seed completed!");
   console.log("");
   console.log("📋 Login info:");
-  console.log("  Teacher  → username: teacher1   | password: 123456");
-  console.log("  Students → username: NIM         | password: NIM");
+  console.log("  Teacher      → username: teacher1   | password: 123456");
+  console.log("  Demo Student → username: student1   | password: 123456");
+  console.log("  Students     → username: NIM         | password: NIM");
 }
 
 main()
