@@ -53,7 +53,6 @@ function BackConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; onCa
 
 function DocumentPreviewModal({ url, onClose }: { url: string; onClose: () => void }) {
   const fullUrl = url.startsWith("http") ? url : `${BASE_URL}${url}`;
-  // Pakai Google Docs Viewer supaya browser render langsung tanpa trigger download manager
   const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fullUrl)}&embedded=true`;
   return (
     <div
@@ -70,14 +69,9 @@ function DocumentPreviewModal({ url, onClose }: { url: string; onClose: () => vo
           </button>
         </div>
         <div className="flex-1 overflow-hidden">
-          {/* Production / */}
-          {/* <iframe
-            src={viewerUrl}
-            className="w-full h-full border-0"
-            title="Preview Materi"
-            sandbox="allow-scripts allow-same-origin allow-popups"
-          /> */}
-          {/* / Local /  */}
+          {/* Production */}
+          {/* <iframe src={viewerUrl} className="w-full h-full border-0" title="Preview Materi" sandbox="allow-scripts allow-same-origin allow-popups" /> */}
+          {/* Local */}
           <iframe src={fullUrl} className="w-full h-full border-0" title="Preview Materi" />
         </div>
       </div>
@@ -150,6 +144,68 @@ function StudentResultModal({ score, correct, total, onClose }: { score: number;
   );
 }
 
+// ─── Animated Card List ───────────────────────────────────────────────────────
+
+/**
+ * Wraps cards in a column with CSS-based slide animation.
+ * Each card gets a data-card-id attribute and uses CSS transitions on `top`.
+ * We track prev positions and animate to new positions using the FLIP technique.
+ */
+function useCardAnimation(cards: CardType[]) {
+  const prevPositions = useRef<Map<string, number>>(new Map());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const animatingRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+
+    // Get current positions
+    const cardEls = container.querySelectorAll<HTMLElement>("[data-card-id]");
+    const currentPositions = new Map<string, number>();
+    cardEls.forEach((el) => {
+      const id = el.getAttribute("data-card-id")!;
+      currentPositions.set(id, el.getBoundingClientRect().top);
+    });
+
+    // Animate cards that moved
+    cardEls.forEach((el) => {
+      const id = el.getAttribute("data-card-id")!;
+      const prev = prevPositions.current.get(id);
+      const curr = currentPositions.get(id);
+
+      if (prev !== undefined && curr !== undefined && prev !== curr) {
+        const delta = prev - curr;
+        if (Math.abs(delta) > 2) {
+          // Apply inverse transform immediately (no transition)
+          el.style.transition = "none";
+          el.style.transform = `translateY(${delta}px)`;
+
+          // Force reflow
+          el.getBoundingClientRect();
+
+          // Animate to natural position
+          el.style.transition = "transform 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+          el.style.transform = "translateY(0)";
+
+          animatingRef.current.add(id);
+          const onEnd = () => {
+            el.style.transition = "";
+            el.style.transform = "";
+            animatingRef.current.delete(id);
+          };
+          el.addEventListener("transitionend", onEnd, { once: true });
+        }
+      }
+    });
+
+    // Save current positions for next render
+    prevPositions.current = currentPositions;
+  });
+
+  return containerRef;
+}
+
 // ─── Main Board ───────────────────────────────────────────────────────────────
 
 export default function Board() {
@@ -176,12 +232,60 @@ export default function Board() {
 
   const [reviewMode, setReviewMode] = useState(false);
   const [correctConnIds, setCorrectConnIds] = useState<Set<string>>(new Set());
-  // correctPairs: pasangan fromId-toId yang benar dari backend
   const [correctPairs, setCorrectPairs] = useState<{ fromId: string; toId: string }[]>([]);
 
-  // Lock state untuk student
-  const [lockReason, setLockReason] = useState<"submitted" | "timeout" | null>(null);
   const [loadingMap, setLoadingMap] = useState(true);
+
+  // Per-column animation refs
+  const claimRef = useRef<HTMLDivElement>(null);
+  const evidenceRef = useRef<HTMLDivElement>(null);
+  const reasoningRef = useRef<HTMLDivElement>(null);
+  const colRefs: Record<ColumnType, React.RefObject<HTMLDivElement | null>> = {
+    claim: claimRef,
+    evidence: evidenceRef,
+    reasoning: reasoningRef,
+  };
+
+  // Track positions before cards state updates for FLIP animation
+  const prevCardPositions = useRef<Map<string, number>>(new Map());
+
+  // Capture positions before render
+  const capturePositions = useCallback(() => {
+    const positions = new Map<string, number>();
+    Object.values(colRefs).forEach((ref) => {
+      if (!ref.current) return;
+      ref.current.querySelectorAll<HTMLElement>("[data-card-id]").forEach((el) => {
+        const id = el.getAttribute("data-card-id")!;
+        positions.set(id, el.getBoundingClientRect().top);
+      });
+    });
+    prevCardPositions.current = positions;
+  }, []);
+
+  // Run FLIP animation after render
+  const animateCards = useCallback(() => {
+    Object.values(colRefs).forEach((ref) => {
+      if (!ref.current) return;
+      ref.current.querySelectorAll<HTMLElement>("[data-card-id]").forEach((el) => {
+        const id = el.getAttribute("data-card-id")!;
+        const prev = prevCardPositions.current.get(id);
+        const curr = el.getBoundingClientRect().top;
+
+        if (prev !== undefined && Math.abs(prev - curr) > 2) {
+          const delta = prev - curr;
+          el.style.transition = "none";
+          el.style.transform = `translateY(${delta}px)`;
+          el.getBoundingClientRect(); // force reflow
+          el.style.transition = "transform 380ms cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+          el.style.transform = "translateY(0)";
+          el.addEventListener("transitionend", () => {
+            el.style.transition = "";
+            el.style.transform = "";
+          }, { once: true });
+        }
+      });
+    });
+  }, []);
 
   // Fetch map detail (cards, connections, documentUrl) + cek lock untuk student
   useEffect(() => {
@@ -190,22 +294,11 @@ export default function Board() {
     setLoadingMap(true);
     getMapDetail(token, mapId)
       .then((res) => {
-        const map = res.data as any; // includes submissions, timeoutAt
+        const map = res.data as any;
 
         if (map.documentUrl) setDocUrl(map.documentUrl);
 
-        // Cek timeout
-        if (role === "STUDENT" && map.timeoutAt && new Date(map.timeoutAt) < new Date()) {
-          setLockReason("timeout");
-          return;
-        }
-
-        // Cek sudah submit (ada submission milik user ini)
-        if (role === "STUDENT" && map.submissions && map.submissions.length > 0) {
-          setLockReason("submitted");
-          return;
-        }
-
+        // Selalu load kartu
         if (map.cards && map.cards.length > 0) {
           setCards(
             map.cards.map((c: any) => ({
@@ -224,6 +317,33 @@ export default function Board() {
               toId: conn.toId,
             }))
           );
+        }
+
+        // Kalau student sudah pernah submit → langsung review mode dengan hasil terakhir
+        if (role === "STUDENT" && map.submissions && map.submissions.length > 0) {
+          const submission = map.submissions[0];
+          const studentAnswers: ConnectionType[] = (submission.answers ?? []).map((a: any, i: number) => ({
+            id: `ans_${i}`,
+            fromId: a.fromId,
+            toId: a.toId,
+          }));
+
+          const teacherPairs: { fromId: string; toId: string }[] = (map.connections ?? []).map((c: any) => ({
+            fromId: c.fromId,
+            toId: c.toId,
+          }));
+
+          const correctSet = new Set<string>();
+          studentAnswers.forEach((ans) => {
+            const isCorrect = teacherPairs.some(
+              (tp) => tp.fromId === ans.fromId && tp.toId === ans.toId
+            );
+            if (isCorrect) correctSet.add(ans.id);
+          });
+
+          setConnections(studentAnswers);
+          setCorrectConnIds(correctSet);
+          setReviewMode(true);
         }
       })
       .catch(() => {})
@@ -258,6 +378,10 @@ export default function Board() {
 
     if (!alreadyConnected && !sourceHasOutgoing) {
       setConnections((prev) => [...prev, { id: uid(), fromId: connectingFrom.cardId, toId: targetId }]);
+
+      // Capture positions BEFORE updating cards (for FLIP animation)
+      capturePositions();
+
       setCards((prev) => {
         const sourceColCards = prev.filter((c) => c.column === connectingFrom.column);
         const sourceIndex = sourceColCards.findIndex((c) => c.id === connectingFrom.cardId);
@@ -269,6 +393,14 @@ export default function Board() {
         newTargetColCards.splice(sourceIndex, 0, moved);
         return prev.filter((c) => c.column !== targetCol).concat(newTargetColCards);
       });
+
+      // Schedule animation after React re-renders
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          animateCards();
+        });
+      });
+
       showToast("Koneksi berhasil dibuat!");
     } else if (sourceHasOutgoing) {
       showToast("Kartu ini sudah memiliki koneksi.");
@@ -276,7 +408,7 @@ export default function Board() {
       showToast("Koneksi sudah ada.");
     }
     setConnectingFrom(null);
-  }, [connectingFrom, connections, showToast]);
+  }, [connectingFrom, connections, showToast, capturePositions, animateCards]);
 
   const handleRemoveConnection = useCallback((connId: string) => {
     setConnections((prev) => prev.filter((c) => c.id !== connId));
@@ -309,8 +441,6 @@ export default function Board() {
       }));
       const cardRes = await createCards(token, mapId, cardPayload);
       const savedCards = cardRes.data;
-
-      console.log(savedCards);
 
       const localToServer = new Map<string, string>();
       cards.forEach((localCard) => {
@@ -356,7 +486,6 @@ export default function Board() {
 
   const handleStudentModalClose = useCallback(() => {
     if (!studentResult) return;
-    // Build correctConnIds dari correctPairs: cari connection yang fromId & toId cocok
     const correctSet = new Set<string>();
     for (const pair of correctPairs) {
       const conn = connections.find((c) => c.fromId === pair.fromId && c.toId === pair.toId);
@@ -366,42 +495,6 @@ export default function Board() {
     setStudentResult(null);
     setReviewMode(true);
   }, [studentResult, correctPairs, connections]);
-
-  // Lock screen untuk student
-  if (role === "STUDENT" && !loadingMap && lockReason) {
-    const isTimeout = lockReason === "timeout";
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-5 px-6">
-        <div className={`w-16 h-16 rounded-full flex items-center justify-center ${isTimeout ? "bg-amber-50" : "bg-[#4A9E8E]/10"}`}>
-          {isTimeout ? (
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-          ) : (
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4A9E8E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-          )}
-        </div>
-        <div className="text-center">
-          <p className="text-[16px] font-semibold text-gray-900 mb-1">
-            {isTimeout ? "Waktu Pengerjaan Telah Berakhir" : "Kamu Sudah Mengumpulkan Jawaban"}
-          </p>
-          <p className="text-[13px] text-gray-500 max-w-[320px] leading-relaxed">
-            {isTimeout
-              ? "Tenggat waktu untuk map ini sudah terlewati. Kamu tidak dapat mengerjakan map ini lagi."
-              : "Jawaban kamu sudah tercatat. Kamu tidak dapat mengubah atau mengerjakan ulang map ini."}
-          </p>
-        </div>
-        <button
-          onClick={() => router.push("/maps")}
-          className="h-[36px] px-5 rounded-lg bg-[#1C1C2E] text-white text-[13px] font-medium hover:bg-[#2d2d44] transition-colors"
-        >
-          Kembali ke Daftar Map
-        </button>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -479,21 +572,27 @@ export default function Board() {
         {COL_DEFS.map((colDef) => {
           const colCards = cards.filter((c) => c.column === colDef.id);
           return (
-            <Column
+            // Wrapper div with ref for FLIP animation targeting
+            <div
               key={colDef.id}
-              colDef={colDef}
-              cards={colCards}
-              connections={connections}
-              connectingFrom={connectingFrom}
-              onCardClick={handleCardClick}
-              onStartConnect={handleStartConnect}
-              onRemoveConnection={reviewMode ? () => {} : handleRemoveConnection}
-              onDeleteCard={reviewMode ? () => {} : handleDeleteCard}
-              onAddCard={reviewMode ? () => {} : () => setAddModalCol(colDef.id)}
-              reviewMode={reviewMode}
-              correctConnIds={correctConnIds}
-              isTeacher={role === "TEACHER"}
-            />
+              ref={colRefs[colDef.id] as React.RefObject<HTMLDivElement>}
+              className="flex-1 min-w-0"
+            >
+              <Column
+                colDef={colDef}
+                cards={colCards}
+                connections={connections}
+                connectingFrom={connectingFrom}
+                onCardClick={handleCardClick}
+                onStartConnect={handleStartConnect}
+                onRemoveConnection={reviewMode ? () => {} : handleRemoveConnection}
+                onDeleteCard={reviewMode ? () => {} : handleDeleteCard}
+                onAddCard={reviewMode ? () => {} : () => setAddModalCol(colDef.id)}
+                reviewMode={reviewMode}
+                correctConnIds={correctConnIds}
+                isTeacher={role === "TEACHER"}
+              />
+            </div>
           );
         })}
       </div>

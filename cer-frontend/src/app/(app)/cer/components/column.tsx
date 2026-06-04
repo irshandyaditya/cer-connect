@@ -60,6 +60,7 @@ function Column({
   isTeacher = false,
 }: Props) {
   const styles = COL_STYLES[colDef.id];
+  const isStudent = !isTeacher;
 
   return (
     <div
@@ -117,6 +118,7 @@ function Column({
               onDeleteCard={onDeleteCard}
               reviewMode={reviewMode}
               correctConnIds={correctConnIds}
+              isStudent={isStudent}
             />
           );
         })}

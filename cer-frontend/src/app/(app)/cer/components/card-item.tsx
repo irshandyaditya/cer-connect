@@ -28,9 +28,11 @@ type Props = {
   onDeleteCard: (cardId: string) => void;
   reviewMode?: boolean;
   correctConnIds?: Set<string>;
+  isStudent?: boolean;
 };
 
-const TRUNCATE_LENGTH = 160;
+// Fixed card height — semua kartu seragam tingginya
+const CARD_HEIGHT = 120; // px, area teks scroll internal
 
 function CardItem({
   card,
@@ -43,18 +45,12 @@ function CardItem({
   onDeleteCard,
   reviewMode = false,
   correctConnIds = new Set(),
+  isStudent = false,
 }: Props) {
-  const [expanded, setExpanded] = useState(false);
   const [hovered, setHovered] = useState(false);
 
-  const needsTruncate = card.text.length > TRUNCATE_LENGTH;
-  const displayText =
-    !expanded && needsTruncate ? card.text.slice(0, TRUNCATE_LENGTH) + "..." : card.text;
-
-  const accent = ACCENT[card.column];
   const headerColor = HEADER_COLOR[card.column];
 
-  // Determine review highlight: if any of my connections is in correctConnIds → green, else red (when in review mode)
   const hasConnection = myConnections.length > 0;
   const hasCorrect = myConnections.some((c) => correctConnIds.has(c.id));
   const reviewBorderColor = reviewMode && hasConnection
@@ -74,16 +70,20 @@ function CardItem({
     }
   };
 
+  const showActionBar = !reviewMode && hovered && cardState === "normal";
+  const hasConnectAction = !!colDef.canConnectTo;
+  const hasDeleteAction = !isStudent;
+
   return (
     <div
       id={`card-${card.id}`}
-      className={`relative bg-white rounded-xl border-2 p-3.5 transition-all duration-150 group
+      data-card-id={card.id}
+      className={`relative bg-white rounded-xl border-2 transition-all duration-150 group flex flex-col
         ${reviewMode ? "" : stateStyles[cardState]}
         ${cardState === "normal" && !reviewMode ? "hover:shadow-lg" : ""}
       `}
       style={{
         boxShadow: cardState === "normal" && !reviewMode ? "0 2px 8px rgba(0,0,0,0.08)" : undefined,
-        minHeight: "80px",
         borderColor: reviewBorderColor,
         ...(reviewBorderColor ? { boxShadow: `0 0 0 2px ${reviewBorderColor}40` } : {}),
       }}
@@ -91,68 +91,43 @@ function CardItem({
       onMouseLeave={() => setHovered(false)}
       onClick={handleClick}
     >
-      {/* Text */}
-      <p className="text-[13.5px] leading-relaxed text-gray-800 break-words">
-        {displayText}
-      </p>
+      {/* Text area — fixed height, scroll kalau overflow */}
+      <div
+        className="px-3.5 pt-3.5 overflow-y-auto flex-1"
+        style={{ height: CARD_HEIGHT }}
+      >
+        <p className="text-[12px] leading-relaxed text-gray-800 break-words">
+          {card.text}
+        </p>
+      </div>
 
-      {/* Expand/collapse */}
-      {needsTruncate && (
-        <button
-          className="text-xs font-semibold mt-1 block"
-          style={{ color: accent }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setExpanded((v) => !v);
-          }}
-        >
-          {expanded ? "▲ Tutup" : "▼ Selengkapnya"}
-        </button>
-      )}
-
-      {/* Connection badges — hidden in review mode (arrows handle the visual) */}
-      {/* {!reviewMode && myConnections.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-2.5">
-          {myConnections.map((conn) => {
-            const isOutgoing = conn.fromId === card.id;
-            return (
-              <button
-                key={conn.id}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemoveConnection(conn.id);
-                }}
-                className="inline-flex items-center gap-1 text-[10.5px] font-medium px-2 py-0.5 rounded-full border transition-colors"
-                style={{ background: "#f5f5f8", borderColor: "#e0e0ee", color: "#555577" }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "#ffeaea";
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = "#ffcccc";
-                  (e.currentTarget as HTMLButtonElement).style.color = "#cc3333";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "#f5f5f8";
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = "#e0e0ee";
-                  (e.currentTarget as HTMLButtonElement).style.color = "#555577";
-                }}
-                title="Klik untuk hapus koneksi"
-              >
-                <span className="text-[9px]">{isOutgoing ? "→" : "←"}</span>
-                <span>{isOutgoing ? conn.toId.slice(0, 4) : conn.fromId.slice(0, 4)}…</span>
-                <span className="text-[9px]">✕</span>
-              </button>
-            );
-          })}
-        </div>
-      )} */}
-
-      {/* Action bar — hidden in review mode */}
-      {!reviewMode && (
+      {/* Action bar — hidden in review mode, always takes space to keep height consistent */}
+      {!reviewMode && (hasConnectAction || hasDeleteAction) && (
         <div
-          className={`flex items-center gap-2 mt-2.5 pt-2 border-t border-gray-100 transition-opacity duration-150
-            ${hovered && cardState === "normal" ? "opacity-100" : "opacity-0 pointer-events-none"}
+          className={`flex items-center gap-2 px-3.5 pb-2.5 pt-2 border-t border-gray-100 transition-opacity duration-150
+            ${showActionBar ? "opacity-100" : "opacity-0 pointer-events-none"}
           `}
         >
-          {colDef.canConnectTo && (
+          {/* Delete — kiri, hanya non-student */}
+          {hasDeleteAction && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm("Hapus kartu ini?")) {
+                  onDeleteCard(card.id);
+                }
+              }}
+              className="text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md px-1.5 py-0.5 text-sm transition-colors"
+              title="Hapus kartu"
+            >
+              ✕
+            </button>
+          )}
+
+          <div className="flex-1" />
+
+          {/* Hubungkan — kanan */}
+          {hasConnectAction && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -164,20 +139,12 @@ function CardItem({
               🔗 Hubungkan
             </button>
           )}
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (window.confirm("Hapus kartu ini?")) {
-                onDeleteCard(card.id);
-              }
-            }}
-            className="ml-auto text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md px-1.5 py-0.5 text-sm transition-colors"
-            title="Hapus kartu"
-          >
-            ✕
-          </button>
         </div>
+      )}
+
+      {/* Spacer bawah kalau tidak ada action bar (review mode / reasoning col) */}
+      {(reviewMode || (!hasConnectAction && !hasDeleteAction)) && (
+        <div className="pb-2" />
       )}
     </div>
   );
